@@ -1,0 +1,33 @@
+DEFINE
+	VAR __DS0FilterTable = 
+		TREATAS({"NVDA"}, 'dim_stock'[symbol])
+
+	VAR __DS0FilterTable2 = 
+		TREATAS({"YTD"}, 'Time Range'[Range Name])
+
+	VAR __DS0Core = 
+		SUMMARIZECOLUMNS(
+			'Date'[Date],
+			__DS0FilterTable,
+			__DS0FilterTable2,
+			"Sum_open", '_Measure Table'[Sum open],
+			"Min_Low", IGNORE('_Measure Table'[Min Low]),
+			"Max_High", IGNORE('_Measure Table'[Max High]),
+			"AVG_Volume", IGNORE('_Measure Table'[AVG Volume])
+		)
+
+	VAR __DS0IntersectionCount = CALCULATE(COUNTROWS(__DS0Core))
+
+	VAR __DS0BodyBinnedSample = 
+		SAMPLEAXISWITHLOCALMINMAX(3500, __DS0Core, 'Date'[Date], [Sum_open], 350, , ALPHABETICAL, ASC, 105000, 60)
+
+EVALUATE
+	ROW(
+	"DS0IntersectionCount", __DS0IntersectionCount
+)
+
+EVALUATE
+	__DS0BodyBinnedSample
+
+ORDER BY
+	'Date'[Date]
