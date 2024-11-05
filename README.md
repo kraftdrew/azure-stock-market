@@ -115,3 +115,9 @@ fs.azure.account.oauth2.client.endpoint {{secrets/kv-stock-market/az--oauth-endp
 As shown in the diagram, although we deploy Azure Databricks on a Virtual Network, serverless clusters do not acquire IP addresses from this range. Serverless clusters are managed by Databricks servers rather than Azure servers. To enable data access from the storage account, we need to create a private endpoint using NCC (Network Connectivity Configurations).
 
 When a private endpoint is added to an NCC, Azure Databricks creates a private endpoint request to your Azure resource. Once accepted, the private endpoint enables secure access from the serverless compute plane. This endpoint is dedicated to your Azure Databricks account and accessible only from authorized workspaces. [Documentation](https://learn.microsoft.com/en-us/azure/databricks/security/network/serverless-network-security/serverless-private-link)
+
+
+
+# Power Bi Report
+[Link to Power Bi Report](https://app.powerbi.com/view?r=eyJrIjoiNzFiOGZlZGQtZjdjYi00NTQ0LWI0OGYtNzYxMzY1YzA4NzlhIiwidCI6ImM1OGE5N2E3LTkzZTEtNDI4NC05ZDY5LWM2NzUyYmFmNzdhZiJ9)
+![architecture](/assets/stock_report_gif.gif)
