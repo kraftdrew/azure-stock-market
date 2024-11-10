@@ -1,5 +1,10 @@
 {
   "version": "1.1",
   "userConsent": {},
-  "securityBindingsSignature": "AQAAANCMnd8BFdERjHoAwE/Cl+sBAAAAfGl8VgCs2EaQxKarYBDiygAAAAACAAAAAAAQZgAAAAEAACAAAACUHYfohBP5GeJaO2CSrt+49rDRZVQ6ivzsH2wbOTd2UQAAAAAOgAAAAAIAACAAAAD1J4JKRkl5HKg+IF98ezF0f44QMx4+BSk/CBRYzOi0qFAAAABWGxYEJGH9OfVli+7yo7mOK5rSnqm5c7Pd/RfR7k3NaeJvOB/Lp4ib/Ak/1ipkAUjPrZMXHXGEob/VxS7nbBCw0klsO2oTIXV/sFQ/q1PLTUAAAADEMt1TVetfAKirQ6QgDpbAjYptGtip7hZlD0cBKTf79OmBUiEiyAtk7j/GwynToowgBk+/xa8DHTsLeyy7GGoj"
+  "remoteArtifacts": [
+    {
+      "datasetId": "eab910ed-3584-4375-b103-71e7c1abf71d"
+    }
+  ],
+  "securityBindingsSignature": "AQAAANCMnd8BFdERjHoAwE/Cl+sBAAAAfGl8VgCs2EaQxKarYBDiygAAAAACAAAAAAAQZgAAAAEAACAAAABRtOkBIrcM/BejD03aWHNVZ2Bwxuu2b/rjkUUCLgwvlgAAAAAOgAAAAAIAACAAAAAExfGO45fMJ0VTmNV/mrmqZgFyQBTiDpA6t8m+jp1tUFAAAADdIoBufh8hBM6zzXwIpxcTRKx7rhaHgbHabeo5N9H+wkPw3R1IrDVgc7sASfU+f+lc/vgnGpfeUxULM1hZ+SE3dz/zqyE7PkZshgUb+aUnkkAAAABeq1lZGnwSs60+mN79kkCk2PGitLpT31INUUiaBrT6EQyVvEnk6nKaLQopB/B/GMkSO2Il0Fc9yjULEtDyve/a"
 }
