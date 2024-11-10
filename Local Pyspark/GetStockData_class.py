@@ -2,35 +2,6 @@
 # MAGIC %md
 # MAGIC ## WebSocket Subcription
 
-# COMMAND ----------
-
-# Function to install a package if not already installed
-import subprocess
-import sys
-
-# Function to install a package if not already installed
-def install_package(package_name):
-    try:
-        # Try importing the package to check if it's already installed
-        __import__(package_name)
-        print(f"Package '{package_name}' is already installed.")
-    except ImportError:
-        print(f"Package '{package_name}' not found. Installing now...")
-        # Use subprocess to call pip and install the package
-        subprocess.check_call([sys.executable, "-m", "pip", "install", package_name])
-        # Re-import the package to ensure the installation was successful
-        __import__(package_name)
-        print(f"Package '{package_name}' has been installed.")
-
-
-# Specify the package name
-package_name = 'websockets'
-
-# Call the function to handle installation
-install_package(package_name)
-
-
-# COMMAND ----------
 
 
 import asyncio
@@ -89,7 +60,6 @@ class GetStockData():
         responses_list = []
         # Format of date in "yyyy-mm-dd"
         for symbol in symbols:
-            time.sleep(7)
             url = f"https://api.twelvedata.com/time_series?symbol={symbol}&interval={interval}&start_date={start_date}&end_date={end_date}&apikey={self.api_key}"
             response = requests.get(url)
             # Check if the request was successful
@@ -109,11 +79,11 @@ class GetStockData():
 
 # COMMAND ----------
 
-# Test StockData class()
+# # Test StockData class()
 # list_of_symbols = ["VUG", "SCHG", "QQQ"]
 
-# stock_data = StockData("23c1a7c2da0148c584eac977ac756432")
-# data = stock_data.get_historical_stock_data(list_of_symbols)
+# stock_data = GetStockData("23c1a7c2da0148c584eac977ac756432")
+# data = stock_data.get_historical_stock_data(symbols=list_of_symbols)
 
 # print(json.dumps(data, indent=4)) 
 

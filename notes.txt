@@ -1,0 +1,104 @@
+
+3.31.19 
+major.minor.batch version 
+
+
+# Initialize a New Project
+poetry init
+
+# Install Project Dependencies
+poetry install
+
+# Add a Dependency
+poetry add <package>
+
+# Add a Dependency with ^ for minor updates
+poetry add requests@^2.0
+
+# Add a Dependency with ~ for patch updates
+poetry add requests@~2.0
+
+# Remove a Dependency
+poetry remove <package>
+
+# Update Dependencies
+poetry update
+
+# Activate the Virtual Environment
+poetry shell
+
+# Deactivate the Virtual Environment
+exit
+
+# Run a Command Inside the Virtual Environment
+poetry run <command>
+
+# list all virt. env.
+poetry env listpoetry env list
+
+# Show Environment Info
+poetry env info
+
+# Remove the existing virtual environment 
+poetry env remove env_name (can be found using poetry env list )
+
+# List All Dependencies
+poetry show
+
+# List all dependencies (direct and transitive), y
+poetry show --tree
+
+
+# Publish a Package
+poetry publish
+
+# Lock Dependencies
+poetry lock
+
+# Check Dependency Status
+poetry check
+
+
+# check all config setting for poetry 
+poetry config --list
+
+# check specific config setting for poetry 
+poetry config virtualenvs.in-project
+
+# config poetry to install .venv to  project folder 
+poetry config virtualenvs.in-project true
+
+
+### python , pip
+
+# show installed python packages
+pip list
+
+
+
+# show installed python packages 
+# in format that can be saved to a requirements.txt file,
+pip freeze
+
+
+### CLI:
+
+# get current ip
+curl ifconfig.me
+
+
+# check path to current python Iterpreter
+which python3
+
+
+PC@MacBook-Air azure-stock-market % which python3
+/Library/Frameworks/Python.framework/Versions/3.10/bin/python3
+
+
+# Install Azure CLI to use Key Vault secrets without hardcoding Client-secret 
+
+#install azure CLI if not installed
+brew update && brew install azure-cli
+
+# login to azure (open window in browser)
+az login

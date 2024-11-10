@@ -1,3 +1,10 @@
+
+# user defined 
+
+# Ignore all dotfiles in 'Local Pyspark'
+Local Pyspark/.*
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
