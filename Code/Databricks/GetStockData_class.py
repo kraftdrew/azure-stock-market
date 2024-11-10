@@ -5,10 +5,6 @@
 # COMMAND ----------
 
 # Function to install a package if not already installed
-import subprocess
-import sys
-
-# Function to install a package if not already installed
 def install_package(package_name):
     try:
         # Try importing the package to check if it's already installed
@@ -16,12 +12,11 @@ def install_package(package_name):
         print(f"Package '{package_name}' is already installed.")
     except ImportError:
         print(f"Package '{package_name}' not found. Installing now...")
-        # Use subprocess to call pip and install the package
-        subprocess.check_call([sys.executable, "-m", "pip", "install", package_name])
+        # Install the package and wait for the installation to complete
+        %pip install {package_name}
         # Re-import the package to ensure the installation was successful
         __import__(package_name)
         print(f"Package '{package_name}' has been installed.")
-
 
 # Specify the package name
 package_name = 'websockets'
