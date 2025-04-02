@@ -7,8 +7,6 @@ class DevSparkSession:
         
         self.appname = appname
 
-
-
         # Set the local IP to avoid loopback hostname warnings
         os.environ["SPARK_LOCAL_IP"] = "10.0.0.131"
 

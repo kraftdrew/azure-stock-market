@@ -9,19 +9,19 @@ import os
 class GetStockData: 
 
     def __init__(self, api_key: str = None):
+        
         if api_key is None:
-            # Check if we are running in Databricks by looking for a specific environment variable.
+            # Check if we are running in Databricks.
             if "DATABRICKS_RUNTIME_VERSION" in os.environ:
                 # On Databricks, retrieve the secret using the secret scope.
-                # Make sure you've configured a secret scope in Databricks that maps to your Azure Key Vault.
                 api_key = dbutils.secrets.get(scope="my_scope", key="twelvedata-apikey")
             else:
                 # For local development, retrieve the secret from Azure Key Vault.
                 key_vault_url = "https://kv-stock-market.vault.azure.net/"
                 credential = DefaultAzureCredential()
                 client = SecretClient(vault_url=key_vault_url, credential=credential)
-                # Retrieve the secret and use its value
                 api_key = client.get_secret("twelvedata-apikey").value
+                
         self.api_key = api_key
                       
 
