@@ -9,9 +9,10 @@ dependencies = [
     "azure-identity (==1.19.0)",
     "azure-keyvault-secrets (==4.9.0)",
     "ipykernel (==6.29.5)",
-    "pyspark (==3.5.3)",
+    "pyspark (==3.4.*)",
     "requests (==2.32.3)",
     "websockets (==14.0)",
+    "delta-spark (==2.4.*)",
 ]
 
 [tool.poetry]
