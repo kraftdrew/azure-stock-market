@@ -2,6 +2,7 @@
 !.git/
 !.gitignore
 spark-docker/*
+Azure storage
 
 Local Pyspark/.*
 */.AzureSecrets.txt
