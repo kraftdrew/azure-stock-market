@@ -91,6 +91,8 @@ curl ifconfig.me
 which python3
 
 
+poetry export -f requirements.txt --without-hashes -o requirements.txt
+
 PC@MacBook-Air azure-stock-market % which python3
 /Library/Frameworks/Python.framework/Versions/3.10/bin/python3
 

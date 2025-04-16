@@ -1,8 +1,11 @@
+.*
+!.git/
+!.gitignore
+spark-docker/*
+Azure storage
 
-# user defined 
-
-# Ignore all dotfiles in 'Local Pyspark'
 Local Pyspark/.*
+*/.AzureSecrets.txt
 
 
 # Byte-compiled / optimized / DLL files

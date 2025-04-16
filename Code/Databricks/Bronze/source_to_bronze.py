@@ -85,7 +85,7 @@ list_of_symbols = ["AAPL","VOO","MSFT", "NVDA","TSLA", "TM", "F", "JPM", "GS", "
 # list_of_symbol_groups = [list_of_symbols_1, list_of_symbols_2, list_of_symbols_3, list_of_symbols_4]
 
 # Initialize GetStockData object with your API key
-stock_data = GetStockData("23c1a7c2da0148c584eac977ac756432")
+stock_data = GetStockData()
 
 # Outer loop for each symbol group
 # all_data = []  # List to store data from all symbol groups and time ranges
