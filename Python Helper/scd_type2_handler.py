@@ -1,22 +1,17 @@
 import datetime
 from delta.tables import DeltaTable
-from pyspark import SparkContext
 from pyspark.sql.functions import current_timestamp, sha2, concat_ws, lit
 from pyspark.sql.dataframe import DataFrame
 
 
-parameters = {
-        "businessColumns" : "Symbol,ExchangeName,Currency,Date",
-        "typeIColumns" : "Symbol",
-        "source_path" : "/Users/PC/Desktop/VS Code Repositories/azure-stock-market/Azure storage/Bronze",
-        "target_path" :  "/Users/PC/Desktop/VS Code Repositories/azure-stock-market/Azure storage/Silver/delta-table" }
 
 
 class SCDType2Handler:
     
-    def __init__(self, spark : SparkContext, parameters ):
+    def __init__(self, parameters):
         
-        self.spark = spark
+        self.unpack_params(parameters)
+        
         self.audit_columns =   {
             "__ActivationDateTime", "__BusinessKeyHash", "__CreateDateTime", "__CreatedBatchLogId", "__CurrentFlag",
             "__DeactivationDateTime", "__DeletedFlag", "__EffectiveEndDateTime", "__EffectiveStartDateTime",
@@ -24,10 +19,10 @@ class SCDType2Handler:
             "__UpdateDateTime", "__UpdatedBatchLogId"
         }
         self.businessColumnsList   = [col.strip()  for col in self.businessColumns.split(",") if  col !=  ""]
-        self.typeIColumnsList = [col.strip()  for col in self.TypeIColumns.split(",") if  col !=  ""]
-        self.typeIColumnsList = list({col for col in  df_bronze.columns}  - self.audit_columns  -  set(self.typeIColumnsList)).sort()
-        self.unpack_params(parameters)
-
+        self.typeIColumnsList = [col.strip()  for col in self.typeIColumns.split(",") if  col !=  ""]
+        self.activationDateTime = datetime.datetime.now()
+        self.deactivationDateTime = self.activationDateTime - datetime.timedelta(seconds=1)
+        
 
     def unpack_params(self, params):
         """
@@ -38,53 +33,40 @@ class SCDType2Handler:
         try:
             self.businessColumns = params["businessColumns"]
             self.typeIColumns = params["typeIColumns"]
-            self.source_path = params["source_path"]
-            self.target_path = params["target_path"]
-            
+
         except KeyError as missing_key:
             raise ValueError(f"Missing required parameter: {missing_key}")
             
     
     
-    def load_delta_to_df(self, load_path) -> DataFrame: 
+    def refresh_timestamp(self):
         
-        df = self.spark.read.format("delta").load(load_path)
-        return df
-    
-    
-    def get_deactivationDateTime(self):
-        
-        activationDateTime = datetime.datetime.now()
-        deactivationDateTime = activationDateTime - datetime.timedelta(seconds=1)
-        return  activationDateTime, deactivationDateTime
+        self.activationDateTime = datetime.datetime.now()
+        self.deactivationDateTime = self.activationDateTime - datetime.timedelta(seconds=1)
         
 
 
-    def add_audit_columns(self, dataframe):
+    def add_audit_columns(self, df):
         
         
+        hashValueColumns = list({col for col in df.columns}  - self.audit_columns  -  set(self.typeIColumnsList)).sort()
+
         
         # Assume df is your source DataFrame and columns like business_key and some_column are present.
-        dataframe = dataframe.withColumn("__CurrentFlag", lit(True)) \
+        df = df.withColumn("__CurrentFlag", lit(True)) \
             .withColumn("__DeletedFlag", lit(False)) \
-            .withColumn("__ActivationDateTime",  lit(activationDateTime)  ) \
+            .withColumn("__ActivationDateTime",  lit(self.activationDateTime)  ) \
             .withColumn("__DeactivationDateTime", lit(None) ) \
             .withColumn("__lastmodified", current_timestamp()) \
             .withColumn("__HashKey", sha2(concat_ws("|", *self.businessColumnsList), 256)) \
-            .withColumn("__HashValue", sha2(concat_ws("|", *self.df_bronze.columns ), 256))
+            .withColumn("__HashValue", sha2(concat_ws("|", *hashValueColumns ), 256))
         
-        return dataframe
+        return df
 
-    def delta_merge_typeII(self, target_path = None, source_path = None):
-        
-        source_path = source_path if source_path else self.source_path
-        target_path = target_path if target_path else self.target_path
-        
-
+    def delta_merge_typeII(self, target_path, source_df):
+      
         # Load the Silver table as a DeltaTable object
-        deltaTable = DeltaTable.forPath(self.spark, source_path)
-
-        source_df = self.load_delta_to_df(source_path)
+        deltaTable = DeltaTable.forPath(self.spark, target_path)
 
         # expire rows 
         deltaTable.alias("t").merge(
@@ -97,19 +79,19 @@ class SCDType2Handler:
             set = {
                 "__CurrentFlag": "false",
                 "__DeletedFlag": "false",
-                "__DeactivationDateTime": f"cast('{deactivationDateTime.strftime('%Y-%m-%d %H:%M:%S')}' as timestamp)",
+                "__DeactivationDateTime": f"cast('{self.deactivationDateTime.strftime('%Y-%m-%d %H:%M:%S')}' as timestamp)",
                 "__lastmodified": "current_timestamp()",
             
             }).execute()
 
 
-        silverDeltaTable.alias("t").merge(
-            df_bronze.alias("s"),
+        DeltaTable.alias("t").merge(
+            source_df.alias("s"),
             condition = """
                         t.__HashKey = s.__HashKey
                         AND t.__CurrentFlag = True
                         """ 
         ).whenNotMatchedInsertAll().execute()
     
-    
+
 
