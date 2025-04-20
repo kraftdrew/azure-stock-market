@@ -1,6 +1,6 @@
 import datetime
-from delta.tables import DeltaTable
-from pyspark.sql.functions import current_timestamp, sha2, concat_ws, lit
+from pyspark.sql.functions import current_timestamp, sha2, concat_ws, lit, cast
+from pyspark.sql.types import DateType, TimestampType
 from pyspark.sql.dataframe import DataFrame
 
 
@@ -49,27 +49,27 @@ class SCDType2Handler:
     def add_audit_columns(self, df):
         
         
-        hashValueColumns = list({col for col in df.columns}  - self.audit_columns  -  set(self.typeIColumnsList)).sort()
+        hashValueColumns = sorted(list({col for col in df.columns}  - self.audit_columns  -  set(self.typeIColumnsList)))
+        
 
         
         # Assume df is your source DataFrame and columns like business_key and some_column are present.
         df = df.withColumn("__CurrentFlag", lit(True)) \
             .withColumn("__DeletedFlag", lit(False)) \
-            .withColumn("__ActivationDateTime",  lit(self.activationDateTime)  ) \
-            .withColumn("__DeactivationDateTime", lit(None) ) \
+            .withColumn("__ActivationDateTime",  lit(self.activationDateTime)  )\
+            .withColumn("__DeactivationDateTime", lit('2099-12-31').cast(TimestampType()) ) \
             .withColumn("__lastmodified", current_timestamp()) \
             .withColumn("__HashKey", sha2(concat_ws("|", *self.businessColumnsList), 256)) \
             .withColumn("__HashValue", sha2(concat_ws("|", *hashValueColumns ), 256))
         
         return df
 
-    def delta_merge_typeII(self, target_path, source_df):
+    def delta_merge_typeII(self, target_delta_table, source_df):
       
         # Load the Silver table as a DeltaTable object
-        deltaTable = DeltaTable.forPath(self.spark, target_path)
 
         # expire rows 
-        deltaTable.alias("t").merge(
+        target_delta_table.alias("t").merge(
             source = source_df.alias("s"),
             condition = """ t.__HashKey = s.__HashKey
                             AND t.__HashValue <> s.__HashValue
@@ -85,7 +85,7 @@ class SCDType2Handler:
             }).execute()
 
 
-        DeltaTable.alias("t").merge(
+        target_delta_table.alias("t").merge(
             source_df.alias("s"),
             condition = """
                         t.__HashKey = s.__HashKey
