@@ -29,12 +29,6 @@ class DevSparkSession:
             .appName(self.appname) \
             .master("local[*]") \
             .config("spark.driver.host", "10.0.0.131") \
-            .enableHiveSupport() \
-            .config("spark.sql.warehouse.dir", str(warehouse_path))
-            .config(
-                    "javax.jdo.option.ConnectionURL",
-                    f"jdbc:derby:{metastore_path};create=true"
-                    )
             .config("spark.driver.extraJavaOptions", f"-Dlog4j.configuration=file://{log4j_path}") \
             .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension") \
             .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")) \

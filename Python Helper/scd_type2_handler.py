@@ -20,8 +20,8 @@ class SCDType2Handler:
         }
         self.businessColumnsList   = [col.strip()  for col in self.businessColumns.split(",") if  col !=  ""]
         self.typeIColumnsList = [col.strip()  for col in self.typeIColumns.split(",") if  col !=  ""]
-        self.activationDateTime = datetime.datetime.now()
-        self.deactivationDateTime = self.activationDateTime - datetime.timedelta(seconds=1)
+        self.effectiveStartDateTime = datetime.datetime.now()
+        self.effectiveEndDateTime = self.effectiveStartDateTime - datetime.timedelta(seconds=1)
         
 
     def unpack_params(self, params):
@@ -41,8 +41,8 @@ class SCDType2Handler:
     
     def refresh_timestamp(self):
         
-        self.activationDateTime = datetime.datetime.now()
-        self.deactivationDateTime = self.activationDateTime - datetime.timedelta(seconds=1)
+        self.effectiveStartDateTime = datetime.datetime.now()
+        self.effectiveEndDateTime = self.effectiveStartDateTime - datetime.timedelta(seconds=1)
         
 
 
@@ -56,8 +56,8 @@ class SCDType2Handler:
         # Assume df is your source DataFrame and columns like business_key and some_column are present.
         df = df.withColumn("__CurrentFlag", lit(True)) \
             .withColumn("__DeletedFlag", lit(False)) \
-            .withColumn("__ActivationDateTime",  lit(self.activationDateTime)  )\
-            .withColumn("__DeactivationDateTime", lit('2099-12-31').cast(TimestampType()) ) \
+            .withColumn("__EffectiveStartDateTime",  lit(self.effectiveStartDateTime)  )\
+            .withColumn("__EffectiveEndDateTime", lit('2099-12-31').cast(TimestampType()) ) \
             .withColumn("__lastmodified", current_timestamp()) \
             .withColumn("__HashKey", sha2(concat_ws("|", *self.businessColumnsList), 256)) \
             .withColumn("__HashValue", sha2(concat_ws("|", *hashValueColumns ), 256))
@@ -79,7 +79,7 @@ class SCDType2Handler:
             set = {
                 "__CurrentFlag": "false",
                 "__DeletedFlag": "false",
-                "__DeactivationDateTime": f"cast('{self.deactivationDateTime.strftime('%Y-%m-%d %H:%M:%S')}' as timestamp)",
+                "__EffectiveEndDateTime": f"cast('{self.effectiveEndDateTime.strftime('%Y-%m-%d %H:%M:%S')}' as timestamp)",
                 "__lastmodified": "current_timestamp()",
             
             }).execute()
