@@ -13,6 +13,14 @@ dependencies = [
     "requests (==2.32.3)",
     "websockets (==14.0)",
     "delta-spark (==2.4.*)",
+    "ipython-sql (>=0.5.0,<0.6.0)",
+    "pyhive (>=0.7.0,<0.8.0)",
+    "sqlalchemy (>=2.0.40,<3.0.0)",
+    "thrift (>=0.21.0,<0.22.0)",
+    "pure-sasl (>=0.6.2,<0.7.0)",
+    "thrift-sasl (>=0.4.3,<0.5.0)",
+    "prettytable (>=3.16.0,<4.0.0)",
+    "nbformat (>=5.10.4,<6.0.0)",
 ]
 
 [tool.poetry]

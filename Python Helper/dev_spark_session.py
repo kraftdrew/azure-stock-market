@@ -2,6 +2,13 @@ import os
 from pyspark.sql import SparkSession
 from delta import *
 
+
+root_path = '/Users/PC/Desktop/VS Code Repositories/azure-stock-market' 
+
+metastore_path = root_path = root_path + "/metastore_db"
+warehouse_path = root_path + "/spark-warehouse"
+
+
 class DevSparkSession:
     
     def __init__(self, appname: str = "SparkDev"):

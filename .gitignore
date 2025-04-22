@@ -3,6 +3,7 @@
 !.gitignore
 spark-docker/*
 Azure storage
+**/metastore_db
 
 Local Pyspark/.*
 */.AzureSecrets.txt

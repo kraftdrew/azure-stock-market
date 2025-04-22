@@ -1,33 +1,30 @@
 import datetime
-from delta.tables import DeltaTable
-from pyspark import SparkContext
-from pyspark.sql.functions import current_timestamp, sha2, concat_ws, lit
+from pyspark.sql.functions import current_timestamp, sha2, concat_ws, lit, cast, col
+from pyspark.sql.types import DateType, TimestampType
 from pyspark.sql.dataframe import DataFrame
+import uuid
 
 
-parameters = {
-        "businessColumns" : "Symbol,ExchangeName,Currency,Date",
-        "typeIColumns" : "Symbol",
-        "source_path" : "/Users/PC/Desktop/VS Code Repositories/azure-stock-market/Azure storage/Bronze",
-        "target_path" :  "/Users/PC/Desktop/VS Code Repositories/azure-stock-market/Azure storage/Silver/delta-table" }
+
 
 
 class SCDType2Handler:
     
-    def __init__(self, spark : SparkContext, parameters ):
+    def __init__(self, parameters):
         
-        self.spark = spark
+        self.unpack_params(parameters)
+        self.batch_id = str(uuid.uuid4()) 
         self.audit_columns =   {
             "__ActivationDateTime", "__BusinessKeyHash", "__CreateDateTime", "__CreatedBatchLogId", "__CurrentFlag",
             "__DeactivationDateTime", "__DeletedFlag", "__EffectiveEndDateTime", "__EffectiveStartDateTime",
-            "__FactKeyHash", "__Hash1Type", "__Hash2Type", "__HashKey", "__HashValue", "__LastModified",
+            "__FactKeyHash", "__Hash1Type", "__Hash2Type", "__HashKey", "__HashValue", "__LastModified", "__lastmodified",
             "__UpdateDateTime", "__UpdatedBatchLogId"
         }
         self.businessColumnsList   = [col.strip()  for col in self.businessColumns.split(",") if  col !=  ""]
-        self.typeIColumnsList = [col.strip()  for col in self.TypeIColumns.split(",") if  col !=  ""]
-        self.typeIColumnsList = list({col for col in  df_bronze.columns}  - self.audit_columns  -  set(self.typeIColumnsList)).sort()
-        self.unpack_params(parameters)
-
+        self.typeIColumnsList = [col.strip()  for col in self.typeIColumns.split(",") if  col !=  ""]
+        self.effectiveStartDateTime = datetime.datetime.now()
+        self.effectiveEndDateTime = self.effectiveStartDateTime - datetime.timedelta(seconds=1)
+        
 
     def unpack_params(self, params):
         """
@@ -38,56 +35,145 @@ class SCDType2Handler:
         try:
             self.businessColumns = params["businessColumns"]
             self.typeIColumns = params["typeIColumns"]
-            self.source_path = params["source_path"]
-            self.target_path = params["target_path"]
-            
+            self.tableType = params["tableType"]
+
         except KeyError as missing_key:
             raise ValueError(f"Missing required parameter: {missing_key}")
+        
+        if self.tableType not in ("Stage", "Dim", "Fact"):
+            raise ValueError(f"tableType value [{self.tableType!r}] is not in allowed list ['Stage', 'Dim', 'Fact']")
             
     
     
-    def load_delta_to_df(self, load_path) -> DataFrame: 
+    def refresh_timestamp(self):
         
-        df = self.spark.read.format("delta").load(load_path)
+        self.effectiveStartDateTime = datetime.datetime.now()
+        self.effectiveEndDateTime = self.effectiveStartDateTime - datetime.timedelta(seconds=1)
+        
+
+
+    def add_audit_columns(self, df):
+        
+        
+        if  self.tableType == "Dim":
+            
+    
+            Hash2Type = sorted(list({col for col in df.columns}  - self.audit_columns  -  set(self.typeIColumnsList)))
+            
+            # Assume df is your source DataFrame and columns like business_key and some_column are present.
+            df = df.withColumn("__CurrentFlag", lit(True)) \
+                .withColumn("__DeletedFlag", lit(False)) \
+                .withColumn("__EffectiveStartDateTime",  lit(self.effectiveStartDateTime)  )\
+                .withColumn("__EffectiveEndDateTime", lit('2099-12-31').cast(TimestampType()) ) \
+                .withColumn("__BusinessKeyHash", sha2(concat_ws("|", *self.businessColumnsList), 256)) \
+                .withColumn("__Hash1Type", sha2(concat_ws("|", *self.typeIColumnsList ), 256)) \
+                .withColumn("__Hash2Type", sha2(concat_ws("|", *Hash2Type ), 256)) \
+                .withColumn("__CreatedBatchLogId", lit(self.batch_id)) \
+                .withColumn("__CreateDateTime", current_timestamp()) \
+                .withColumn("__UpdatedBatchLogId", lit(None)) \
+                .withColumn("__UpdateDateTime", lit(None))
+               
+                
+        elif self.tableType == "Fact":
+            
+            FactKeyHash = sorted(list({col for col in df.columns}  - self.audit_columns ))
+            
+            # Assume df is your source DataFrame and columns like business_key and some_column are present.
+            df = df.withColumn("__DeletedFlag", lit(False)) \
+                .withColumn("__FactKeyHash", sha2(concat_ws("|", *FactKeyHash ), 256)) \
+                .withColumn("__CreatedBatchLogId", lit(self.batch_id)) \
+                .withColumn("__CreateDateTime", current_timestamp()) \
+            
+        ## silver, stage
+        else:
+            
+            hashValueColumns = sorted(list({col for col in df.columns}  - self.audit_columns  -  set(self.typeIColumnsList)))
+            
+            # Assume df is your source DataFrame and columns like business_key and some_column are present.
+            df = df.withColumn("__CurrentFlag", lit(True)) \
+                .withColumn("__DeletedFlag", lit(False)) \
+                .withColumn("__EffectiveStartDateTime",  lit(self.effectiveStartDateTime)  )\
+                .withColumn("__EffectiveEndDateTime", lit('2099-12-31').cast(TimestampType()) ) \
+                .withColumn("__lastmodified", current_timestamp()) \
+                .withColumn("__HashKey", sha2(concat_ws("|", *self.businessColumnsList), 256)) \
+                .withColumn("__HashValue", sha2(concat_ws("|", *hashValueColumns ), 256)) \
+                .withColumn("__CreatedBatchLogId", lit(self.batch_id)) \
+                .withColumn("__CreateDateTime", current_timestamp()) \
+                .withColumn("__UpdatedBatchLogId", lit(None)) \
+                .withColumn("__UpdateDateTime", lit(None))
+            
         return df
     
-    
-    def get_deactivationDateTime(self):
-        
-        activationDateTime = datetime.datetime.now()
-        deactivationDateTime = activationDateTime - datetime.timedelta(seconds=1)
-        return  activationDateTime, deactivationDateTime
-        
 
-
-    def add_audit_columns(self, dataframe):
-        
-        
-        
-        # Assume df is your source DataFrame and columns like business_key and some_column are present.
-        dataframe = dataframe.withColumn("__CurrentFlag", lit(True)) \
-            .withColumn("__DeletedFlag", lit(False)) \
-            .withColumn("__ActivationDateTime",  lit(activationDateTime)  ) \
-            .withColumn("__DeactivationDateTime", lit(None) ) \
-            .withColumn("__lastmodified", current_timestamp()) \
-            .withColumn("__HashKey", sha2(concat_ws("|", *self.businessColumnsList), 256)) \
-            .withColumn("__HashValue", sha2(concat_ws("|", *self.df_bronze.columns ), 256))
-        
-        return dataframe
-
-    def delta_merge_typeII(self, target_path = None, source_path = None):
-        
-        source_path = source_path if source_path else self.source_path
-        target_path = target_path if target_path else self.target_path
-        
-
+    def delta_merge_typeII(self, target_delta_table, source_df):
+      
         # Load the Silver table as a DeltaTable object
-        deltaTable = DeltaTable.forPath(self.spark, source_path)
 
-        source_df = self.load_delta_to_df(source_path)
+        print(self.tableType)
+ 
+        if  self.tableType == "Dim":
+            
+            # expire rows  
+            
+            if self.typeIColumnsList:
+            
+            
+                update_set = { 
+                        **{column : col(f"s.{column}") for column in  self.typeIColumnsList},
+                        "__UpdatedBatchLogId" : lit(self.batch_id),
+                        "__UpdateDateTime" : current_timestamp() 
+                        }
 
-        # expire rows 
-        deltaTable.alias("t").merge(
+            
+                ##Type1 Column
+                target_delta_table.alias("t").merge(
+                    source = source_df.alias("s"),
+                    condition = """ t.__BusinessKeyHash = s.__BusinessKeyHash
+                                    AND t.__Hash1Type <> s.__Hash1Type
+                                    AND t.__CurrentFlag = True
+                                """
+                ).whenMatchedUpdate(
+                    set = update_set          
+                ).execute()
+                
+            
+            ##Type2 Column
+            target_delta_table.alias("t").merge(
+                source = source_df.alias("s"),
+                condition = """ t.__BusinessKeyHash = s.__BusinessKeyHash
+                                AND t.__Hash2Type <> s.__Hash2Type
+                                AND t.__CurrentFlag = True
+                            """
+            ).whenMatchedUpdate(
+                set = {
+                    "__CurrentFlag": "false",
+                    "__DeletedFlag": "false",
+                    "__UpdatedBatchLogId" : lit(self.batch_id),
+                    "__UpdateDateTime" : "current_timestamp()",
+                    "__EffectiveEndDateTime": f"cast('{self.effectiveEndDateTime.strftime('%Y-%m-%d %H:%M:%S')}' as timestamp)",                
+                }).execute()
+
+            target_delta_table.alias("t").merge(
+                source_df.alias("s"),
+                condition = """
+                            t.__BusinessKeyHash = s.__BusinessKeyHash
+                            AND t.__CurrentFlag = True
+                            """ 
+            ).whenNotMatchedInsertAll().execute()
+        
+        
+        elif  self.tableType == "Fact":
+            
+
+            target_delta_table.alias("t").merge(
+             source_df.alias("s"),
+             condition = 't.__FactKeyHash = s.__FactKeyHash'
+            ).whenNotMatchedInsertAll().execute()
+               
+            
+        else: 
+              
+            target_delta_table.alias("t").merge(
             source = source_df.alias("s"),
             condition = """ t.__HashKey = s.__HashKey
                             AND t.__HashValue <> s.__HashValue
@@ -97,19 +183,21 @@ class SCDType2Handler:
             set = {
                 "__CurrentFlag": "false",
                 "__DeletedFlag": "false",
-                "__DeactivationDateTime": f"cast('{deactivationDateTime.strftime('%Y-%m-%d %H:%M:%S')}' as timestamp)",
+                "__UpdatedBatchLogId" : lit(self.batch_id),
+                "__UpdateDateTime" : "current_timestamp()",
+                "__EffectiveEndDateTime": f"cast('{self.effectiveEndDateTime.strftime('%Y-%m-%d %H:%M:%S')}' as timestamp)",
                 "__lastmodified": "current_timestamp()",
             
             }).execute()
 
 
-        silverDeltaTable.alias("t").merge(
-            df_bronze.alias("s"),
-            condition = """
-                        t.__HashKey = s.__HashKey
-                        AND t.__CurrentFlag = True
-                        """ 
-        ).whenNotMatchedInsertAll().execute()
-    
-    
+            target_delta_table.alias("t").merge(
+                source_df.alias("s"),
+                condition = """
+                            t.__HashKey = s.__HashKey
+                            AND t.__CurrentFlag = True
+                            """ 
+            ).whenNotMatchedInsertAll().execute()
+        
+
 
