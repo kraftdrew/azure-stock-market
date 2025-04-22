@@ -1,6 +1,17 @@
-python - <<'PYCODE'
-import thrift, thrift_sasl, pure_sasl
-print("thrift:", thrift.__version__)
-print("thrift_sasl:", thrift_sasl.__version__)
-print("pure_sasl:", pure_sasl.__version__)
-PYCODE
+typeIColumnsList = ['col1', 'col2', 'col3', 'col4']
+
+ 
+
+
+update_set = { 
+                        
+                        "__UpdatedBatchLogId" : "lit(self.batch_id)",
+                        "__UpdateDateTime" : "current_timestamp() "
+                        }
+                        
+for col in typeIColumnsList: 
+    update_set[col] = f"s.{col}"
+    
+    
+print(update_set) 
+    
