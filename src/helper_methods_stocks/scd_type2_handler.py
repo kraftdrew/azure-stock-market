@@ -1,7 +1,6 @@
 import datetime
-from pyspark.sql.functions import current_timestamp, sha2, concat_ws, lit, cast, col
-from pyspark.sql.types import DateType, TimestampType
-from pyspark.sql.dataframe import DataFrame
+from pyspark.sql.functions import current_timestamp, sha2, concat_ws, lit, col
+from pyspark.sql.types import TimestampType
 import uuid
 
 

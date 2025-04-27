@@ -1,10 +1,10 @@
 from pyspark.sql.functions import explode, lit, col, sequence, date_format, dayofweek, year, expr
-from datetime import date, timedelta
+from datetime import date
 from delta.tables import DeltaTable
 
 
 
-class HelperMethons(): 
+class HelperMethods(): 
     
     def __init__(self, spark):
         
