@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "helper-methods-stocks"
+name = "common-stock-classes"
 version = "0.1.0"
 description = ""
 authors = ["Andrew_mac <andrewkravchuk97@gmail.com>"]
@@ -15,6 +15,7 @@ ipykernel = "^6.29.5"
 azure-identity = "^1.19.0"
 azure-keyvault-secrets = "^4.9.0"
 delta-spark = "^3.3.1"
+setuptools = "^80.9.0"
 
 [build-system]
 requires = ["poetry-core"]

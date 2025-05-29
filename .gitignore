@@ -1,9 +1,11 @@
-.*
 !.git/
 !.gitignore
 spark-docker/*
 Azure storage
 **/metastore_db
+.poetry
+.vscode
+.DS_Store
 
 Local Pyspark/.*
 */.AzureSecrets.txt

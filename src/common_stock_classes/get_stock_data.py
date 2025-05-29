@@ -2,9 +2,7 @@ import websockets
 import requests
 import json
 import time
-from azure.identity import DefaultAzureCredential
-from azure.keyvault.secrets import SecretClient
-import os
+
 
 
 
