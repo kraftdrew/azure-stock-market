@@ -1,0 +1,34 @@
+name: Build and Upload Wheel to DBFS
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-upload:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.10
+
+      - name: Install Poetry and Build Tools
+        run: |
+          pip install poetry build databricks-cli
+          poetry install
+
+      - name: Build the wheel
+        run: |
+          poetry build  # generates dist/*.whl
+
+      - name: Upload Wheel to DBFS
+        env:
+          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+        run: |
+          databricks fs cp dist/*.whl dbfs:/FileStore/libs/ --overwrite
