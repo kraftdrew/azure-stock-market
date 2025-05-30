@@ -11,11 +11,10 @@ class HelperMethods():
         self.spark = spark
          
 
-    def update_DimDate_fromRange(self, start_date: date | str =  '2000-01-01', 
-                    end_date: date | str = '2010-12-31',
-                    dimDate_path = None): 
+    def update_DimDate_fromRange(self, dimDate_path : str,  start_date: str =  '2000-01-01', 
+                    end_date: str = '2010-12-31'
+                    ): 
         
-        dimDate_path = dimDate_path if dimDate_path else "/Users/PC/Desktop/VS Code Repositories/azure-stock-market/Azure storage/Gold/delta-tables/dim-date"
         
 
         if isinstance(start_date, str): 
@@ -40,7 +39,7 @@ class HelperMethods():
                         .withColumn("MonthName", date_format(col("date"), "MMM"))
                         .withColumn("MonthNumber", date_format(col("date"), "M").cast("int"))
                         .withColumn("Year", year("date").cast("int"))
-                        .withColumn("YearMonth", date_format(col("date"), "yyyy-MM"))         
+                        .withColumn("YearMonth", date_format(col("date"), "yyyyMM").cast("int"))
         )
 
 
@@ -59,8 +58,7 @@ class HelperMethods():
                 source = date_df.alias("s") ) \
             .whenNotMatchedInsertAll() \
             .execute()
-            print("Dim Date is Updated")
-
+            print(f"Dim Table Updated with date range [ {start_date} : {end_date} ] ")
 
 
 

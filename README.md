@@ -108,6 +108,15 @@ fs.azure.account.oauth2.client.secret {{secrets/kv-stock-market/spn-stockmarket-
 # Specifies the OAuth 2.0 token endpoint 
 # Format: https://login.microsoftonline.com/{Directory (tenant) ID}/oauth2/token
 fs.azure.account.oauth2.client.endpoint {{secrets/kv-stock-market/az--oauth-endpoint}}
+spark.databricks.delta.schema.autoMerge.enabled true
+```
+
+
+4. Install PyPi packages on Databricks Cluster
+
+```
+websockets>=14.0,<15.0
+requests>=2.32.0,<2.33.0
 ```
 
 ## Accessing Azure Data Lake through an All-Purpose Cluster

@@ -1,4 +1,4 @@
-import datetime
+import datetime as dt
 from pyspark.sql.functions import current_timestamp, sha2, concat_ws, lit, col
 from pyspark.sql.types import TimestampType
 import uuid
@@ -21,8 +21,8 @@ class SCDType2Handler:
         }
         self.businessColumnsList   = [col.strip()  for col in self.businessColumns.split(",") if  col !=  ""]
         self.typeIColumnsList = [col.strip()  for col in self.typeIColumns.split(",") if  col !=  ""]
-        self.effectiveStartDateTime = datetime.datetime.now()
-        self.effectiveEndDateTime = self.effectiveStartDateTime - datetime.timedelta(seconds=1)
+        self.effectiveStartDateTime = dt.datetime.now()
+        self.effectiveEndDateTime = self.effectiveStartDateTime - dt.timedelta(seconds=1)
         
 
     def unpack_params(self, params):
@@ -46,8 +46,8 @@ class SCDType2Handler:
     
     def refresh_timestamp(self):
         
-        self.effectiveStartDateTime = datetime.datetime.now()
-        self.effectiveEndDateTime = self.effectiveStartDateTime - datetime.timedelta(seconds=1)
+        self.effectiveStartDateTime = dt.datetime.now()
+        self.effectiveEndDateTime = self.effectiveStartDateTime - dt.timedelta(seconds=1)
         
 
 
@@ -105,10 +105,13 @@ class SCDType2Handler:
     
 
     def delta_merge_typeII(self, target_delta_table, source_df):
+
+
       
+        
         # Load the Silver table as a DeltaTable object
 
-        print(self.tableType)
+        
  
         if  self.tableType == "Dim":
             
@@ -118,10 +121,12 @@ class SCDType2Handler:
             
             
                 update_set = { 
-                        **{column : col(f"s.{column}") for column in  self.typeIColumnsList},
+                        **{column : col(f"s.{column}") for column in  self.typeIColumnsList if not column.endswith("SID") },
                         "__UpdatedBatchLogId" : lit(self.batch_id),
                         "__UpdateDateTime" : current_timestamp() 
                         }
+                
+             
 
             
                 ##Type1 Column
