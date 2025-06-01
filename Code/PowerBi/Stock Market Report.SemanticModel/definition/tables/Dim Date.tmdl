@@ -1,0 +1,110 @@
+table 'Dim Date'
+	lineageTag: ced51964-46b1-4075-996c-3ee542020c58
+	dataCategory: Time
+
+	column DateID
+		dataType: int64
+		formatString: 0
+		lineageTag: db9b6d6d-5a37-4b41-80dc-382f5dcb20ba
+		summarizeBy: none
+		sourceColumn: DateID
+
+		annotation SummarizationSetBy = Automatic
+
+	column Date
+		dataType: dateTime
+		isKey
+		formatString: Long Date
+		lineageTag: 1ee51114-04d3-4da4-871a-00898ebabde8
+		summarizeBy: none
+		sourceColumn: Date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column Day
+		dataType: int64
+		formatString: 0
+		lineageTag: f3fd5c27-ccb4-4c0f-875c-2b5b34b07d0d
+		summarizeBy: none
+		sourceColumn: Day
+
+		annotation SummarizationSetBy = Automatic
+
+	column DayOfWeek
+		dataType: string
+		lineageTag: 364a98ed-9d9e-42f1-a545-0384161500e3
+		summarizeBy: none
+		sourceColumn: DayOfWeek
+
+		annotation SummarizationSetBy = Automatic
+
+	column DayOfWeekNumber
+		dataType: int64
+		formatString: 0
+		lineageTag: 116b05a9-4cd9-46cf-8116-e7d42612fb4b
+		summarizeBy: none
+		sourceColumn: DayOfWeekNumber
+
+		annotation SummarizationSetBy = Automatic
+
+	column MonthName
+		dataType: string
+		lineageTag: c10340af-c6a2-4648-a299-36b60b72331b
+		summarizeBy: none
+		sourceColumn: MonthName
+
+		annotation SummarizationSetBy = Automatic
+
+	column MonthNumber
+		dataType: int64
+		formatString: 0
+		lineageTag: 7c011c29-2124-4e1c-8bab-0b4e0df40bf9
+		summarizeBy: none
+		sourceColumn: MonthNumber
+
+		annotation SummarizationSetBy = Automatic
+
+	column Year
+		dataType: int64
+		formatString: 0
+		lineageTag: d4fe40c6-3823-4757-8177-f9a9481227ea
+		summarizeBy: none
+		sourceColumn: Year
+
+		annotation SummarizationSetBy = Automatic
+
+	column YearMonth
+		dataType: int64
+		formatString: 0
+		lineageTag: 5df38cf8-0de4-4fac-a5f0-5414e92fad6e
+		summarizeBy: none
+		sourceColumn: YearMonth
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Year-Month Date' = DATE( 'Dim Date'[Year],  'Dim Date'[MonthNumber], 01)
+		formatString: yyyy-mm
+		lineageTag: 3fcc8569-1fe6-4f58-b361-c160e48f585f
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isDateTimeCustom":true}
+
+	partition 'Dim Date' = m
+		mode: import
+		source =
+				let
+				    Source = Databricks.Catalogs("adb-3615338042282873.13.azuredatabricks.net", "/sql/1.0/warehouses/a9bd9c6185df8880", [Catalog=null, Database=null, EnableAutomaticProxyDiscovery=null]),
+				    stocks_Database = Source{[Name="stocks",Kind="Database"]}[Data],
+				    gold_Schema = stocks_Database{[Name="gold",Kind="Schema"]}[Data],
+				    dim_date_Table = gold_Schema{[Name="dim_date",Kind="Table"]}[Data]
+				in
+				    dim_date_Table
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

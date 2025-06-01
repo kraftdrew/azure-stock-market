@@ -1,0 +1,97 @@
+table 'Dim Symbol'
+	lineageTag: 5d623d58-edc4-48f2-81fd-f0c331dbcfeb
+
+	column Symbol
+		dataType: string
+		lineageTag: 8414cd4e-91b7-4fbe-b639-cc7e18efc2e7
+		summarizeBy: none
+		sourceColumn: Symbol
+		sortByColumn: Sort
+
+		changedProperty = SortByColumn
+
+		annotation SummarizationSetBy = Automatic
+
+	column ExchangeName
+		dataType: string
+		lineageTag: 3f8d362c-ba96-4a60-88df-baf832e16042
+		summarizeBy: none
+		sourceColumn: ExchangeName
+
+		annotation SummarizationSetBy = Automatic
+
+	column Currency
+		dataType: string
+		lineageTag: 7c2fb54a-8fdb-45eb-8e4a-45e25d186632
+		summarizeBy: none
+		sourceColumn: Currency
+
+		annotation SummarizationSetBy = Automatic
+
+	column Type
+		dataType: string
+		lineageTag: a2ded17d-3c60-40c4-984d-fb4bb8b6271a
+		summarizeBy: none
+		sourceColumn: Type
+
+		annotation SummarizationSetBy = Automatic
+
+	column ExchangeTimeZone
+		dataType: string
+		lineageTag: ff8c9a8c-15c7-4ae5-83b4-ff348b7b4346
+		summarizeBy: none
+		sourceColumn: ExchangeTimeZone
+
+		annotation SummarizationSetBy = Automatic
+
+	column Sort
+		dataType: int64
+		formatString: 0
+		lineageTag: 4c3a8268-3c3e-47c5-b6b5-6b6bc4196776
+		summarizeBy: none
+		sourceColumn: Sort
+
+		annotation SummarizationSetBy = Automatic
+
+	column Industry
+		dataType: string
+		lineageTag: db695236-290e-4eaf-98b6-edbb97dba48a
+		summarizeBy: none
+		sourceColumn: Industry
+
+		annotation SummarizationSetBy = Automatic
+
+	column Logo
+		dataType: string
+		lineageTag: b3ef9147-4911-482c-94d1-568b23628f3a
+		dataCategory: ImageUrl
+		summarizeBy: none
+		sourceColumn: Logo
+
+		annotation SummarizationSetBy = Automatic
+
+	column SymbolSID
+		dataType: int64
+		formatString: 0
+		lineageTag: 69f0484c-a9af-47ad-b05e-d5b73b7880e8
+		summarizeBy: none
+		sourceColumn: SymbolSID
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'Dim Symbol' = m
+		mode: import
+		source =
+				let
+				    Source = Databricks.Catalogs("adb-3615338042282873.13.azuredatabricks.net", "/sql/1.0/warehouses/a9bd9c6185df8880", [Catalog=null, Database=null, EnableAutomaticProxyDiscovery=null]),
+				    stocks_Database = Source{[Name="stocks",Kind="Database"]}[Data],
+				    gold_Schema = stocks_Database{[Name="gold",Kind="Schema"]}[Data],
+				    dimsymbol_Table = gold_Schema{[Name="dimsymbol",Kind="Table"]}[Data],
+				    #"Removed Columns" = Table.RemoveColumns(dimsymbol_Table,{"__CurrentFlag", "__DeletedFlag", "__EffectiveStartDateTime", "__EffectiveEndDateTime", "__BusinessKeyHash", "__Hash1Type", "__Hash2Type", "__CreatedBatchLogId", "__UpdatedBatchLogId", "__CreateDateTime", "__UpdateDateTime"})
+				in
+				    #"Removed Columns"
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

@@ -1,0 +1,60 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
+  "name": "2ee8580d3f4571c92da2",
+  "position": {
+    "x": 1390,
+    "y": 867.69230769230762,
+    "z": 26000,
+    "height": 30.769230769230766,
+    "width": 185.38461538461539,
+    "tabOrder": 26000
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "Author",
+                    "textStyle": {
+                      "color": "#666666"
+                    }
+                  },
+                  {
+                    "value": ": "
+                  },
+                  {
+                    "value": "Andrew Kravchuk",
+                    "textStyle": {},
+                    "url": "https://www.linkedin.com/in/andrewkravchuk"
+                  }
+                ],
+                "horizontalTextAlignment": "right"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "background": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

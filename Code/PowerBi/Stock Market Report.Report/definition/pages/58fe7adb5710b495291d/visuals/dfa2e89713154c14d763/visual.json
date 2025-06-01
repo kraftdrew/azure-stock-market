@@ -1,0 +1,16 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
+  "name": "dfa2e89713154c14d763",
+  "position": {
+    "x": 145.08412615850764,
+    "y": 382.44725578834039,
+    "z": 19000,
+    "height": 65,
+    "width": 265.24920717482564,
+    "tabOrder": 21000
+  },
+  "visualGroup": {
+    "displayName": "Tesla",
+    "groupMode": "ScaleMode"
+  }
+}

@@ -121,7 +121,7 @@ class SCDType2Handler:
             
             
                 update_set = { 
-                        **{column : col(f"s.{column}") for column in  self.typeIColumnsList if not column.endswith("SID") },
+                        **{column : col(f"s.{column}") for column in  self.typeIColumnsList },
                         "__UpdatedBatchLogId" : lit(self.batch_id),
                         "__UpdateDateTime" : current_timestamp() 
                         }

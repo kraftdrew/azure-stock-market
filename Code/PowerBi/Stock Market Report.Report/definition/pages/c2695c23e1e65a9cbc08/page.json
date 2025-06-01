@@ -1,0 +1,8 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/1.4.0/schema.json",
+  "name": "c2695c23e1e65a9cbc08",
+  "displayName": "Architecture Diagram",
+  "displayOption": "FitToPage",
+  "height": 900,
+  "width": 1600
+}

@@ -1,0 +1,16 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
+  "name": "f168ca8d329767598924",
+  "position": {
+    "x": 145.08412615850764,
+    "y": 225.92615810367661,
+    "z": 17000,
+    "height": 64.999999999999972,
+    "width": 255.24920717482567,
+    "tabOrder": 19000
+  },
+  "visualGroup": {
+    "displayName": "MSFT",
+    "groupMode": "ScaleMode"
+  }
+}

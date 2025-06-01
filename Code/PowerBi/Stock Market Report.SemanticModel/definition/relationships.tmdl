@@ -1,0 +1,8 @@
+relationship AutoDetected_d98b6bc8-96c1-4afb-9a0e-04a4e5053c6e
+	fromColumn: 'Fact Daily'.DateID
+	toColumn: 'Dim Date'.DateID
+
+relationship 585b2984-3c27-9ba3-b7ea-20e43fc72daf
+	fromColumn: 'Fact Daily'.SymbolSID
+	toColumn: 'Dim Symbol'.SymbolSID
+

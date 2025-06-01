@@ -1,0 +1,96 @@
+table 'Fact Daily'
+	lineageTag: 13139f25-ce0f-401e-b578-20cea065dcbc
+
+	column TransactionSID
+		dataType: int64
+		formatString: 0
+		lineageTag: c3cb9c35-e0a3-4daa-8974-442d8f2a6686
+		summarizeBy: count
+		sourceColumn: TransactionSID
+
+		annotation SummarizationSetBy = Automatic
+
+	column SymbolSID
+		dataType: int64
+		formatString: 0
+		lineageTag: ff8a319f-6988-4529-a3fd-b550ff2bc98f
+		summarizeBy: none
+		sourceColumn: SymbolSID
+
+		annotation SummarizationSetBy = Automatic
+
+	column Volume
+		dataType: int64
+		formatString: 0
+		lineageTag: 960c815c-b54c-4bbe-9c71-04b7d652f6a0
+		summarizeBy: sum
+		sourceColumn: Volume
+
+		annotation SummarizationSetBy = Automatic
+
+	column High
+		dataType: double
+		lineageTag: f9832f9a-faa2-456e-b220-aa3a4de2799e
+		summarizeBy: sum
+		sourceColumn: High
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column Low
+		dataType: double
+		lineageTag: c72dec5f-c4f7-4735-b08f-22ef4d429ed0
+		summarizeBy: sum
+		sourceColumn: Low
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column Close
+		dataType: double
+		lineageTag: 9649e1e4-6d6c-4460-af1b-3272dbb83c7a
+		summarizeBy: sum
+		sourceColumn: Close
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column Open
+		dataType: double
+		lineageTag: 45d3ec0d-d9ac-45ad-9fed-ea45128cc1ce
+		summarizeBy: sum
+		sourceColumn: Open
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column DateID
+		dataType: int64
+		formatString: 0
+		lineageTag: 462dd365-fa9b-417b-8e59-e7be04f7fb1b
+		summarizeBy: none
+		sourceColumn: DateID
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'Fact Daily' = m
+		mode: import
+		source =
+				let
+				    Source = Databricks.Catalogs("adb-3615338042282873.13.azuredatabricks.net", "/sql/1.0/warehouses/a9bd9c6185df8880", [Catalog=null, Database=null, EnableAutomaticProxyDiscovery=null]),
+				    stocks_Database = Source{[Name="stocks",Kind="Database"]}[Data],
+				    gold_Schema = stocks_Database{[Name="gold",Kind="Schema"]}[Data],
+				    factdaily_Table = gold_Schema{[Name="factdaily",Kind="Table"]}[Data],
+				    #"Removed Columns" = Table.RemoveColumns(factdaily_Table,{"__DeletedFlag", "__FactKeyHash", "__CreatedBatchLogId", "__CreateDateTime"}),
+				    #"Sorted Rows" = Table.Sort(#"Removed Columns",{{"SymbolSID", Order.Descending}})
+				in
+				    #"Sorted Rows"
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

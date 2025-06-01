@@ -1,0 +1,16 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
+  "name": "48f3d0edca88e837c479",
+  "position": {
+    "x": 145.08412615850764,
+    "y": 304.18670694600848,
+    "z": 18000,
+    "height": 65,
+    "width": 263.73940325325714,
+    "tabOrder": 20000
+  },
+  "visualGroup": {
+    "displayName": "NVDA",
+    "groupMode": "ScaleMode"
+  }
+}

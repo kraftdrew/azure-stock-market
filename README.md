@@ -109,6 +109,7 @@ fs.azure.account.oauth2.client.secret {{secrets/kv-stock-market/spn-stockmarket-
 # Format: https://login.microsoftonline.com/{Directory (tenant) ID}/oauth2/token
 fs.azure.account.oauth2.client.endpoint {{secrets/kv-stock-market/az--oauth-endpoint}}
 spark.databricks.delta.schema.autoMerge.enabled true
+spark.sql.sources.partitionOverwriteMode dynamic
 ```
 
 
