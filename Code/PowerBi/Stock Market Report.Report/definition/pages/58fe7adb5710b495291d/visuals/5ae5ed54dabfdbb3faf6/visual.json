@@ -1,0 +1,16 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
+  "name": "5ae5ed54dabfdbb3faf6",
+  "position": {
+    "x": 145.08412615850764,
+    "y": 69.405060419012756,
+    "z": 15000,
+    "height": 65,
+    "width": 254.77301669863519,
+    "tabOrder": 15000
+  },
+  "visualGroup": {
+    "displayName": "VOO",
+    "groupMode": "ScaleMode"
+  }
+}

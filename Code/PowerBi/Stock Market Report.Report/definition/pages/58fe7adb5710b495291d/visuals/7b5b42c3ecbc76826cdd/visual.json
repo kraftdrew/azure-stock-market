@@ -1,0 +1,16 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
+  "name": "7b5b42c3ecbc76826cdd",
+  "position": {
+    "x": 145.08412615850764,
+    "y": 695.489451157668,
+    "z": 23000,
+    "height": 65,
+    "width": 266.24920717482564,
+    "tabOrder": 17000
+  },
+  "visualGroup": {
+    "displayName": "GS Filter",
+    "groupMode": "ScaleMode"
+  }
+}

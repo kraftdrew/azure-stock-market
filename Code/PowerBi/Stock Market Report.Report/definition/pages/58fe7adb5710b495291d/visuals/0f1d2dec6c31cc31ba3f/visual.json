@@ -1,0 +1,16 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
+  "name": "0f1d2dec6c31cc31ba3f",
+  "position": {
+    "x": 145.08412615850764,
+    "y": 538.96835347300419,
+    "z": 21000,
+    "height": 65,
+    "width": 266.24920717482564,
+    "tabOrder": 23000
+  },
+  "visualGroup": {
+    "displayName": "Ford ",
+    "groupMode": "ScaleMode"
+  }
+}

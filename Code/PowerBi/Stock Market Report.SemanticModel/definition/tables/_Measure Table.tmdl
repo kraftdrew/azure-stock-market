@@ -1,0 +1,266 @@
+table '_Measure Table'
+	lineageTag: c3f9021e-3dc1-4123-a10d-56bb09e470a2
+
+	measure 'First Close Value for Selected Period' = ```
+			
+			  
+			
+			var _var =  [NonBlank Open Date]  
+			var _selectedtimerange= [Selected Time Range] 
+			 
+			 RETURN 
+			var _result = CALCULATE( [Sum Close] ,  'Dim Date'[Date] = _var  ) 
+			
+			 return 
+			 CALCULATE(  
+			_result, 
+			 'CG Time Intelligence'[Name] = _selectedtimerange  )
+			
+			```
+		formatString: \$#,0.00;(\$#,0.00);\$#,0.00
+		displayFolder: _Open & Close for Date Range
+		lineageTag: 43ddc182-828f-4fcc-9abe-30323f10be53
+
+		annotation PBI_FormatHint = {"currencyCulture":"en-US"}
+
+	measure 'Sum Close' = ```
+			sum( 'Fact Daily'[Close] ) 
+			```
+		displayFolder: _Main Measures
+		lineageTag: 117ced02-365c-48eb-9877-95aab521af79
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Last Close Value for Selected Period' = ```
+			CALCULATE( [Sum Close] ,  FILTER( all( 'Dim Date'[Date]),   'Dim Date'[Date] = [NonBlank Close Date] )  )  
+			```
+		formatString: \$#,0.00;(\$#,0.00);\$#,0.00
+		displayFolder: _Open & Close for Date Range
+		lineageTag: 1530a01e-1ff7-4638-a7ae-4c950529cdb1
+
+	measure GreenLine = if( [Last Close Value for Selected Period] - [First Close Value for Selected Period]  >= 0 , [Close for Selected Period] )
+		formatString: \$#,0.00;(\$#,0.00);\$#,0.00
+		displayFolder: Data Between Ranges
+		lineageTag: 3ba6b4c9-82d1-481c-a7ee-2b9eb5b8d08a
+
+	measure RedLine = ```
+			
+			
+			  if( [Last Close Value for Selected Period] - [First Close Value for Selected Period]  < 0 , [Close for Selected Period] )  
+			```
+		formatString: \$#,0.00;(\$#,0.00);\$#,0.00
+		displayFolder: Data Between Ranges
+		lineageTag: c44aa33d-f425-4426-83a1-25ba99db8193
+
+	measure 'Text Stock Growth % For Selected Range' = FORMAT( [Stock Growth %] , "+0.00%;-0.00%;0.00%" )
+		displayFolder: _Open & Close for Date Range
+		lineageTag: e9832abf-a620-4962-9d83-1460dedb0e43
+
+	measure 'Color Stock Growth' = ```
+			if( [Last Close Value for Selected Period] - [First Close Value for Selected Period]  >= 0 , "#039520" , "#DD0012" ) 
+			```
+		lineageTag: 69190697-3aad-49f5-abcc-b57e99ac7ab6
+
+	measure 'Selected Time Range' = ```
+			SELECTEDVALUE('Time Range'[Range Name], "30 Days" ) 
+			```
+		displayFolder: _Selected Value
+		lineageTag: 3986032a-b43a-42c0-a338-402443d2ccfe
+
+	measure 'Close for Selected Period' = ```
+			
+			 
+			 var selectedrange =  [Selected Time Range]
+			
+			return
+			CALCULATE([Sum Close] , 'CG Time Intelligence'[Name] =  selectedrange)
+			```
+		displayFolder: Data Between Ranges
+		lineageTag: 139b71ba-ead7-44bb-bb07-a65592165e61
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure MinDate = min ( 'Dim Date'[Date] )
+		formatString: General Date
+		displayFolder: _Main Measures
+		lineageTag: 19459998-fcbd-4a45-88db-e4a7440bb2ad
+
+	measure 'Max Date' = max ( 'Dim Date'[Date] )
+		formatString: General Date
+		displayFolder: _Main Measures
+		lineageTag: 166abdb3-7e5d-4e42-9ae4-8343c375b0c6
+
+	measure 'SelectedValues Symbol' = SELECTEDVALUE(  'Dim Symbol'[Symbol])
+		displayFolder: _Selected Value
+		lineageTag: c25723d3-36e5-4d6a-b9c8-3709c8f91d98
+
+	measure 'SelectedValues Exchange Name' = SELECTEDVALUE(  'Dim Symbol'[ExchangeName])
+		displayFolder: _Selected Value
+		lineageTag: 2407f184-28d0-4846-92ce-8bd1698ca500
+
+	measure 'Sum Open' = sum( 'Fact Daily'[Open])
+		formatString: \$#,0.00;(\$#,0.00);\$#,0.00
+		displayFolder: _Main Measures
+		lineageTag: 1226036d-a86c-49b1-9b38-8b459790861d
+
+	measure 'NonBlank Open Date' = ```
+			
+			
+			var selectedrange = [Selected Time Range]
+			
+			
+			return 
+			 CALCULATE(  [MinDate]  , 
+			FILTER(  all( 'Dim Date') , [Sum Open] > 0 ),
+			'CG Time Intelligence'[Name] =  selectedrange 
+			
+			)  
+			
+			
+			```
+		formatString: dd-mmm-yy
+		displayFolder: _Open & Close for Date Range
+		lineageTag: 822e09f3-b16e-47e8-b539-6138ee1012fa
+
+		annotation PBI_FormatHint = {"isDateTimeCustom":true}
+
+	measure 'NonBlank Close Date' = ```
+			
+			 
+			CALCULATE(  [Max Date]  , 
+			FILTER( all('Dim Date'), [Sum Close] > 0 ) )
+			```
+		formatString: dd-mmm-yy
+		displayFolder: _Open & Close for Date Range
+		lineageTag: b9cff263-a93b-4e3f-8f5c-32bdcde31ad5
+
+		annotation PBI_FormatHint = {"isDateTimeCustom":true}
+
+	measure 'Min Low' = ```
+			min( 'Fact Daily'[Low]) 
+			```
+		formatString: \$#,0.00;(\$#,0.00);\$#,0.00
+		displayFolder: _Main Measures
+		lineageTag: 787c0654-53a2-4cc6-854e-b0200874fb83
+
+	measure 'Max High' = max( 'Fact Daily'[High] )
+		formatString: \$#,0.00;(\$#,0.00);\$#,0.00
+		displayFolder: _Main Measures
+		lineageTag: 8b07911f-fb22-46c5-a532-52382faa5187
+
+	measure 'AVG Volume' = AVERAGE('Fact Daily'[Volume])
+		formatString: \$#,0;(\$#,0);\$#,0
+		displayFolder: _Main Measures
+		lineageTag: d033a374-f552-427d-a04c-6ff9baf670c9
+
+	measure 'Money Invested' = ```
+			10000 
+			```
+		formatString: \$#,0.###############;(\$#,0.###############);\$#,0.###############
+		displayFolder: _Main Measures
+		lineageTag: 6ad71372-13fd-469b-9da1-56a15e916bcb
+
+	measure 'Stock Growth %' = ```
+			
+			
+			var result =  DIVIDE( [Last Close Value for Selected Period] - [First Close Value for Selected Period]  , [First Close Value for Selected Period] )
+			
+			RETURN 
+			if( not ISBLANK(result), result )
+			```
+		formatString: #,0.00
+		displayFolder: _Open & Close for Date Range
+		lineageTag: df3067fd-1778-41be-a323-2e13f2249860
+
+	measure 'Investment Growth' = [Money Invested]   * (1 + [Stock Growth %] )
+		formatString: \$#,0;(\$#,0);\$#,0
+		displayFolder: _Main Measures
+		lineageTag: 1dd71aa8-db53-40a6-9759-b20d3f99e1c5
+
+	measure 'Text Last 30 days' = "Last 30 days: "
+		displayFolder: _Main Measures
+		lineageTag: 76a9fa53-7c71-4c74-9741-fe8c97fa78b8
+
+	measure 'Open/Close AVG Gain %' = ```
+			
+			  AVERAGEX(  
+			    'Fact Daily', 
+			    DIVIDE(  'Fact Daily'[Close]  - 'Fact Daily'[Open],  'Fact Daily'[Open] ) )
+			```
+		formatString: 0.00%;-0.00%;0.00%
+		displayFolder: _Main Measures
+		lineageTag: 02450b8e-8841-4655-990d-f2b8e678ead5
+
+	measure 'Symbol AVG Stock Growth % 30 days' =
+			
+			
+			CALCULATE (
+			    AVERAGEX ( 'Dim Symbol', [Stock Growth %] ),
+			    'Time Range'[Range Name] = "30 Days"
+			)
+		formatString: 0.00%;-0.00%;0.00%
+		displayFolder: _Open & Close for Date Range
+		lineageTag: ec7c2d75-b37d-4d23-9458-ef41bb41eb49
+
+	measure 'Symbol AVG Stock Growth % 90 days' =
+			
+			
+			CALCULATE (
+			    AVERAGEX ( 'Dim Symbol', [Stock Growth %] ),
+			    'Time Range'[Range Name] = "90 Days"
+			)
+		formatString: 0.00%;-0.00%;0.00%
+		displayFolder: _Open & Close for Date Range
+		lineageTag: de005f2f-eaf1-4585-af45-0d4f1c32148d
+
+	measure 'Symbol AVG Stock Growth % 1Y' =
+			
+			
+			CALCULATE (
+			    AVERAGEX ( 'Dim Symbol', [Stock Growth %] ),
+			    'Time Range'[Range Name] = "1Y"
+			)
+		formatString: 0.00%;-0.00%;0.00%
+		displayFolder: _Open & Close for Date Range
+		lineageTag: dd24d880-3683-4fc2-9c6f-9f65f4d53965
+
+	measure 'Symbol AVG Stock Growth % 5Y' =
+			
+			
+			CALCULATE (
+			    AVERAGEX ( 'Dim Symbol', [Stock Growth %] ),
+			    'Time Range'[Range Name] = "5Y"
+			)
+		formatString: 0.00%;-0.00%;0.00%
+		displayFolder: _Open & Close for Date Range
+		lineageTag: 8add77f3-f295-45fa-88dc-68fa1d141a81
+
+	measure 'Max MDT DateTime' = max('Data Updated DateTime'[MDT DateTime] ) // - TIME(6, 0, 0)
+		formatString: dd-mmm-yy hh:nn AM/PM
+		lineageTag: 85aa8816-1449-48c7-99d2-32c808fffae3
+
+		annotation PBI_FormatHint = {"isDateTimeCustom":true}
+
+	measure 'Max UTC DateTime' = max('Data Updated DateTime'[UTC DateTime] )
+		formatString: dd-mmm-yy hh:nn AM/PM
+		lineageTag: e74412fb-6290-4151-b404-bb134c8d43c9
+
+		annotation PBI_FormatHint = {"isDateTimeCustom":true}
+
+	measure 'Logo Measure' = max( 'Dim Symbol'[Logo] )
+		lineageTag: be57f1c1-cd27-4aaa-a5fe-e67f1a6c64e0
+
+	partition '_Measure Table' = m
+		mode: import
+		source =
+				let
+				    Source = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("i44FAA==", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text = true]) in type table [Column1 = _t]),
+				    #"Changed Type" = Table.TransformColumnTypes(Source,{{"Column1", type text}}),
+				    #"Removed Columns" = Table.RemoveColumns(#"Changed Type",{"Column1"})
+				in
+				    #"Removed Columns"
+
+	annotation PBI_ResultType = Table
+
+	annotation PBI_NavigationStepName = Navigation
+

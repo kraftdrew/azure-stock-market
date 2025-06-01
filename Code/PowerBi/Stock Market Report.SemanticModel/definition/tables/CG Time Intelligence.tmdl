@@ -1,0 +1,70 @@
+table 'CG Time Intelligence'
+	lineageTag: 258cb777-d3f9-46da-926d-d61747d8d9f2
+
+	calculationGroup
+
+		calculationItem YTD = ```
+				calculate( 
+				    selectedmeasure(),
+				    filter( 'Dim Date' , 'Dim Date'[Date] >=  date(year([NonBlank Close Date]) , 01 , 01 ) && 'Dim Date'[Date] <= [NonBlank Close Date])
+				    )
+				```
+
+		calculationItem '30 Days' = ```
+				calculate( 
+				    selectedmeasure(),
+				    FILTER( 'Dim Date' , 'Dim Date'[Date] >= [NonBlank Close Date]-30 && 'Dim Date'[Date] <= [NonBlank Close Date])
+				    )
+				```
+
+		calculationItem '90 Days' = ```
+				calculate( 
+				    selectedmeasure(),
+				    FILTER( 'Dim Date' , 'Dim Date'[Date] >= [NonBlank Close Date]-90 && 'Dim Date'[Date]  <= [NonBlank Close Date])
+				    )
+				```
+
+		calculationItem 1Y = ```
+				var  lastclosedate = [NonBlank Close Date]
+				
+				return
+				calculate( 
+				    selectedmeasure(),
+				    FILTER(  'Dim Date', 'Dim Date'[Date] >= date( year( lastclosedate)-1 , MONTH(lastclosedate), DAY(lastclosedate))   &&  'Dim Date'[Date] <= lastclosedate)
+				    )
+				```
+
+		calculationItem 5Y = ```
+				var  lastclosedate = [NonBlank Close Date]
+				
+				return
+				calculate( 
+				    selectedmeasure(),
+				    FILTER( 'Dim Date' , 'Dim Date'[Date] >= date( year( lastclosedate)-5 , MONTH(lastclosedate), DAY(lastclosedate))   && 'Dim Date'[Date] <= lastclosedate)
+				    )
+				```
+
+		calculationItem MAX = ```
+				calculate( 
+				    selectedmeasure()
+				    )
+				```
+
+	column Name
+		dataType: string
+		lineageTag: 58bd7963-bd75-4c73-b8d6-bad56afb1f03
+		summarizeBy: none
+		sourceColumn: Name
+		sortByColumn: Ordinal
+
+		annotation SummarizationSetBy = Automatic
+
+	column Ordinal
+		dataType: int64
+		isHidden
+		lineageTag: e626e7fe-6696-4365-b10f-82875143dd06
+		summarizeBy: sum
+		sourceColumn: Ordinal
+
+		annotation SummarizationSetBy = Automatic
+

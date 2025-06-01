@@ -1,0 +1,30 @@
+model Model
+	culture: en-CA
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	discourageImplicitMeasures
+	sourceQueryCulture: en-CA
+	dataAccessOptions
+		legacyRedirects
+		returnErrorValuesAsNull
+
+annotation __PBI_TimeIntelligenceEnabled = 0
+
+annotation PBIDesktopVersion = 2.143.1204.0 (25.05)+23c84aace645781dd62b8a26eb0418c7e6a84b72
+
+annotation PBI_QueryOrder = ["_Measure Table","Data Updated DateTime","Dim Symbol","Fact Daily","Dim Date"]
+
+annotation __TEdtr = 1
+
+annotation PBI_ProTooling = ["DaxQueryView_Desktop","DevMode"]
+
+ref table '_Measure Table'
+ref table tableopenbalnce
+ref table 'CG Time Intelligence'
+ref table 'Time Range'
+ref table 'Data Updated DateTime'
+ref table 'Dim Symbol'
+ref table 'Fact Daily'
+ref table 'Dim Date'
+
+ref cultureInfo en-CA
+

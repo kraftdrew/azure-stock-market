@@ -3,7 +3,6 @@
   "datasetReference": {
     "byPath": {
       "path": "../Stock Market Report.SemanticModel"
-    },
-    "byConnection": null
+    }
   }
 }

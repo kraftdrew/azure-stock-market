@@ -1,0 +1,42 @@
+table 'Data Updated DateTime'
+	lineageTag: 00cd25cb-2997-40a2-9feb-e4510d05d5ee
+
+	column 'UTC DateTime'
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 14c6b1d8-1833-4d0a-9995-d553c2521846
+		summarizeBy: none
+		sourceColumn: UTC DateTime
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'MDT DateTime'
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 7970d6f0-ce59-4cb8-9de0-574e67fa3901
+		summarizeBy: none
+		sourceColumn: MDT DateTime
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'Data Updated DateTime' = m
+		mode: import
+		source =
+				let
+				    Source = #table(
+				        {"MDT DateTime", "UTC DateTime"},
+				        {
+				            {
+				                DateTimeZone.RemoveZone(DateTimeZone.LocalNow()),
+				                DateTimeZone.RemoveZone(DateTimeZone.UtcNow())
+				            }
+				        }
+				    ),
+				    #"Changed Type" = Table.TransformColumnTypes(Source,{{"UTC DateTime", type datetime}, {"MDT DateTime", type datetime}})
+				in
+				    #"Changed Type"
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

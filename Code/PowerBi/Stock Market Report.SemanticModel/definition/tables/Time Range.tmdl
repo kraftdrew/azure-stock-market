@@ -1,0 +1,36 @@
+table 'Time Range'
+	lineageTag: 6da39a24-e7db-430c-a179-df7343d4b2ae
+
+	column 'Range Name'
+		lineageTag: ee2b489a-b611-4eb7-9378-b5fed8bafd9c
+		summarizeBy: none
+		sourceColumn: [Value1]
+		sortByColumn: 'Sort Order'
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Sort Order'
+		formatString: 0
+		lineageTag: 05ffe234-3905-4f7d-820d-8aac62287ca5
+		summarizeBy: sum
+		sourceColumn: [Value2]
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'Time Range' = calculated
+		mode: import
+		source = ```
+				
+				{ 
+				    ("30 Days",1),
+				    ("90 Days",2),
+				    ("YTD",3),
+				    ("1Y",4),
+				    ("5Y",5),
+				    ("MAX",6) 
+				}
+				
+				```
+
+	annotation PBI_Id = 1c026d48e80d48b992c12b6928635dee
+

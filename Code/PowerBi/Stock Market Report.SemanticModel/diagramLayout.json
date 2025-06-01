@@ -4,81 +4,30 @@
     {
       "ordinal": 0,
       "scrollPosition": {
-        "x": 464.57935946423959,
+        "x": 211.90100982257383,
         "y": 0
       },
       "nodes": [
         {
           "location": {
-            "x": 35.308308646361411,
-            "y": 3.9359581619308663
+            "x": 1271.1774196539366,
+            "y": 310.94954262131148
           },
-          "nodeIndex": "dim_stock",
-          "nodeLineageTag": "5ee11b9c-015a-4678-8af3-70529518c1a6",
+          "nodeIndex": "_Measure Table",
+          "nodeLineageTag": "c3f9021e-3dc1-4123-a10d-56bb09e470a2",
           "size": {
-            "height": 266.97191702765031,
-            "width": 234
-          },
-          "zIndex": 6
-        },
-        {
-          "location": {
-            "x": 521.60744243658928,
-            "y": 77.754638352013743
-          },
-          "nodeIndex": "fact_stock_price",
-          "nodeLineageTag": "2d49b5c8-885c-47b3-8119-13ee6700179c",
-          "size": {
-            "height": 485.69352632486527,
+            "height": 237.24419876726893,
             "width": 234
           },
           "zIndex": 5
         },
         {
           "location": {
-            "x": 891.30891269584743,
-            "y": 73.674663426903919
-          },
-          "nodeIndex": "Date",
-          "nodeLineageTag": "00ff3fe7-d2a0-4610-8ec6-d6ad8ca980a4",
-          "size": {
-            "height": 200,
-            "width": 234
-          },
-          "zIndex": 8
-        },
-        {
-          "location": {
-            "x": 1140.0006040494861,
-            "y": 231.34651776732869
-          },
-          "nodeIndex": "_Measure Table",
-          "nodeLineageTag": "c3f9021e-3dc1-4123-a10d-56bb09e470a2",
-          "size": {
-            "height": 104,
-            "width": 234
-          },
-          "zIndex": 3
-        },
-        {
-          "location": {
-            "x": 1388.6922954031247,
-            "y": 183.17374594129058
+            "x": 948.35822763005672,
+            "y": 11.211693641406022
           },
           "nodeIndex": "tableopenbalnce",
-          "size": {
-            "height": 200,
-            "width": 234
-          },
-          "zIndex": 4
-        },
-        {
-          "location": {
-            "x": 40.224663778798174,
-            "y": 402.89108124656622
-          },
-          "nodeIndex": "Industry",
-          "nodeLineageTag": "9e71cf9b-57c7-4675-84ba-df9b781952e8",
+          "nodeLineageTag": "d0439655-3da0-4587-8992-74fa30206e0a",
           "size": {
             "height": 200,
             "width": 234
@@ -87,8 +36,8 @@
         },
         {
           "location": {
-            "x": 1637.3839867567633,
-            "y": 238.636046487077
+            "x": 1277.4467960091165,
+            "y": 589.26913503213041
           },
           "nodeIndex": "CG Time Intelligence",
           "nodeLineageTag": "258cb777-d3f9-46da-926d-d61747d8d9f2",
@@ -96,24 +45,25 @@
             "height": 128,
             "width": 234
           },
-          "zIndex": 1
+          "zIndex": 3
         },
         {
           "location": {
-            "x": 1886.0756781104019,
-            "y": 202.24730987849125
+            "x": 1287.3712376593203,
+            "y": 72.251577979772321
           },
           "nodeIndex": "Time Range",
+          "nodeLineageTag": "6da39a24-e7db-430c-a179-df7343d4b2ae",
           "size": {
-            "height": 200,
+            "height": 145,
             "width": 234
           },
-          "zIndex": 2
+          "zIndex": 4
         },
         {
           "location": {
-            "x": 2134.7673694640407,
-            "y": 236.7895475962946
+            "x": 1275.951670747713,
+            "y": 750.34503071428139
           },
           "nodeIndex": "Data Updated DateTime",
           "nodeLineageTag": "00cd25cb-2997-40a2-9feb-e4510d05d5ee",
@@ -121,11 +71,50 @@
             "height": 128,
             "width": 234
           },
-          "zIndex": 0
+          "zIndex": 2
+        },
+        {
+          "location": {
+            "x": 341.23132668930066,
+            "y": 504.67313805246556
+          },
+          "nodeIndex": "Dim Date",
+          "nodeLineageTag": "ced51964-46b1-4075-996c-3ee542020c58",
+          "size": {
+            "height": 302.72701618484359,
+            "width": 234
+          },
+          "zIndex": 1
+        },
+        {
+          "location": {
+            "x": 879.84887007905024,
+            "y": 509.1017422255353
+          },
+          "nodeIndex": "Dim Symbol",
+          "nodeLineageTag": "5d623d58-edc4-48f2-81fd-f0c331dbcfeb",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 6
+        },
+        {
+          "location": {
+            "x": 632.32438970909232,
+            "y": 90.247934568471123
+          },
+          "nodeIndex": "Fact Daily",
+          "nodeLineageTag": "13139f25-ce0f-401e-b578-20cea065dcbc",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 8
         }
       ],
       "name": "All tables",
-      "zoomValue": 79.553182037699784,
+      "zoomValue": 89.1925905205695,
       "pinKeyFieldsToTop": false,
       "showExtraHeaderInfo": false,
       "hideKeyFieldsWhenCollapsed": false,
