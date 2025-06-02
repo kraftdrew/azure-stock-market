@@ -97,16 +97,10 @@ class GetStockData():
 3. Afterward, we use these values in the Spark configuration of the Databricks all-purpose cluster.
 
 ```
-# Sets the authentication type to OAuth 
 fs.azure.account.auth.type OAuth
-# Specifies the type of OAuth token provider to use.
 fs.azure.account.oauth.provider.type org.apache.hadoop.fs.azurebfs.oauth2.ClientCredsTokenProvider
-# Client ID of the Azure AD application (Service Principal)
 fs.azure.account.oauth2.client.id {{secrets/kv-stock-market/spn-stockmarket-storage-access-clientid}} 
-# Client secret for the Service Principal
 fs.azure.account.oauth2.client.secret {{secrets/kv-stock-market/spn-stockmarket-storage-access-clientsecret}}
-# Specifies the OAuth 2.0 token endpoint 
-# Format: https://login.microsoftonline.com/{Directory (tenant) ID}/oauth2/token
 fs.azure.account.oauth2.client.endpoint {{secrets/kv-stock-market/az--oauth-endpoint}}
 spark.databricks.delta.schema.autoMerge.enabled true
 spark.sql.sources.partitionOverwriteMode dynamic

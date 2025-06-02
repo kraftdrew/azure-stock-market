@@ -1,8 +1,5 @@
-import websockets
 import requests
-import json
 import time
-
 
 
 
@@ -51,35 +48,6 @@ class GetStockData:
                 pass
 
         return responses_list
-
-    # Subscribe to the WebSocket to get prices in real time
-    async def subscribe_to_websocket():
-        # Replace {$route} with the appropriate route (e.g., "price", "timeseries", etc.)
-        route = "quotes/price"  # Replace with your route
-        api_key = "23c1a7c2da0148c584eac977ac756432"  # Replace with your actual API key
-        uri = f"wss://ws.twelvedata.com/v1/{route}?apikey={api_key}"
-
-        async with websockets.connect(uri) as websocket:
-            # Create the subscription message
-            subscription_message = {
-                "action": "subscribe",
-                "params": {
-                    "symbols": "AAPL,INFY,TRP,QQQ,IXIC,EUR/USD,USD/JPY,BTC/USD"
-                }
-            }
-
-            # Send the subscription message
-            await websocket.send(json.dumps(subscription_message))
-            print(f"Sent: {subscription_message}")
-
-            # Receive messages from the WebSocket
-            while True:
-                response = await websocket.recv() 
-                response_json = json.loads(response)
-                print(f"Received: { json.dumps(response_json, indent=4) }")
-
-    # Run the subscription function
-    # await subscribe_to_websocket()
 
 
 
