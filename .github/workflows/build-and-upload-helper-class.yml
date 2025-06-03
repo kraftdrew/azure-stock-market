@@ -3,6 +3,7 @@ name: Build and Upload Wheel to DBFS
 on:
   push:
     branches: [ main ]
+  workflow_dispatch:  
 
 jobs:
   build-and-upload:
@@ -15,16 +16,15 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: 3.10
+          python-version: 3.11
 
-      - name: Install Poetry and Build Tools
+      - name: Install Build Tools
         run: |
-          pip install poetry build databricks-cli
-          poetry install
+          pip install wheel databricks-cli
 
       - name: Build the wheel
         run: |
-          poetry build  # generates dist/*.whl
+          python setup.py bdist_wheel  # generates dist/*.whl
 
       - name: Upload Wheel to DBFS
         env:
