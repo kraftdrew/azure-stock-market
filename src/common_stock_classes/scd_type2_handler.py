@@ -75,11 +75,14 @@ class SCDType2Handler:
                 
         elif self.tableType == "Fact":
             
-            FactKeyHash = sorted(list({col for col in df.columns}  - self.audit_columns ))
+
+            FactSCD1Hash = sorted(list(set(self.typeIColumnsList)))
+
             
             # Assume df is your source DataFrame and columns like business_key and some_column are present.
             df = df.withColumn("__DeletedFlag", lit(False)) \
-                .withColumn("__FactKeyHash", sha2(concat_ws("|", *FactKeyHash ), 256)) \
+                .withColumn("__FactKeyHash", sha2(concat_ws("|", *self.businessColumnsList), 256)) \
+                .withColumn("__FactSCD1Hash", sha2(concat_ws("|", *FactSCD1Hash ), 256)) \
                 .withColumn("__CreatedBatchLogId", lit(self.batch_id)) \
                 .withColumn("__CreateDateTime", current_timestamp()) \
             
@@ -169,12 +172,24 @@ class SCDType2Handler:
         elif  self.tableType == "Fact":
             
 
-            target_delta_table.alias("t").merge(
-             source_df.alias("s"),
-             condition = 't.__FactKeyHash = s.__FactKeyHash'
-            ).whenNotMatchedInsertAll().execute()
-               
-            
+            (target_delta_table.alias("t")
+            .merge(
+                source_df.alias("s"),
+                # Match on the business key only
+                "t.__FactKeyHash = s.__FactKeyHash"
+            )
+            # 1) If the keys match but the hash changed, delete the stale row
+            .whenMatchedDelete(
+                condition="t.__FactSCD1Hash <> s.__FactSCD1Hash"
+            )
+            # 2) If a target row has no corresponding source row, delete it
+            .whenNotMatchedBySourceDelete()
+            # 3) If a source row has no matching target, insert it
+            .whenNotMatchedInsertAll()
+            .execute()
+            )
+
+
         else: 
               
             target_delta_table.alias("t").merge(
@@ -193,6 +208,7 @@ class SCDType2Handler:
                 "__lastmodified": "current_timestamp()",
             
             }).execute()
+        
 
 
             target_delta_table.alias("t").merge(
