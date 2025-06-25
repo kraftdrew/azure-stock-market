@@ -182,9 +182,6 @@ class SCDType2Handler:
             .whenMatchedDelete(
                 condition="t.__FactSCD1Hash <> s.__FactSCD1Hash"
             )
-            # 2) If a target row has no corresponding source row, delete it
-            .whenNotMatchedBySourceDelete()
-            # 3) If a source row has no matching target, insert it
             .whenNotMatchedInsertAll()
             .execute()
             )
