@@ -1,0 +1,374 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Serverless stock-market ingestion, S3 Parquet, Athena, and REST API.
+
+Parameters:
+  ImageUri:
+    Type: String
+    Description: ECR image URI, including an immutable image tag.
+  ScheduleState:
+    Type: String
+    Default: DISABLED
+    AllowedValues: [ENABLED, DISABLED]
+
+Resources:
+  DataBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  AthenaResultsBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      LifecycleConfiguration:
+        Rules:
+          - Id: DeleteQueryResults
+            Status: Enabled
+            ExpirationInDays: 1
+
+  AppSecret:
+    Type: AWS::SecretsManager::Secret
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      Name: aws-stock-market-poc/app
+      GenerateSecretString:
+        SecretStringTemplate: '{"twelve_data_api_key":"replace-me","powerbi_username":"powerbi"}'
+        GenerateStringKey: powerbi_password
+        PasswordLength: 32
+        ExcludePunctuation: true
+
+  StockMarketDatabase:
+    Type: AWS::Glue::Database
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseInput:
+        Name: stock_market
+
+  PricesTable:
+    Type: AWS::Glue::Table
+    DependsOn: StockMarketDatabase
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseName: stock_market
+      TableInput:
+        Name: prices
+        TableType: EXTERNAL_TABLE
+        Parameters:
+          classification: parquet
+          projection.enabled: "true"
+          projection.load_date.type: date
+          projection.load_date.format: yyyy-MM-dd
+          projection.load_date.range: 2021-01-01,NOW
+          storage.location.template: !Sub
+            - "s3://${Bucket}/transformed/prices/load_date=${!load_date}/"
+            - Bucket: !Ref DataBucket
+        PartitionKeys:
+          - {Name: load_date, Type: string}
+        StorageDescriptor:
+          Location: !Sub "s3://${DataBucket}/transformed/prices/"
+          InputFormat: org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat
+          OutputFormat: org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat
+          SerdeInfo:
+            SerializationLibrary: org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe
+          Columns:
+            - {Name: symbol, Type: string}
+            - {Name: exchange_name, Type: string}
+            - {Name: currency, Type: string}
+            - {Name: instrument_type, Type: string}
+            - {Name: exchange_timezone, Type: string}
+            - {Name: volume, Type: bigint}
+            - {Name: high, Type: "decimal(18,3)"}
+            - {Name: low, Type: "decimal(18,3)"}
+            - {Name: close, Type: "decimal(18,3)"}
+            - {Name: open, Type: "decimal(18,3)"}
+            - {Name: price_date, Type: date}
+            - {Name: extracted_at, Type: timestamp}
+
+  AthenaWorkGroup:
+    Type: AWS::Athena::WorkGroup
+    Properties:
+      Name: stock-market-serverless
+      State: ENABLED
+      RecursiveDeleteOption: true
+      WorkGroupConfiguration:
+        EnforceWorkGroupConfiguration: true
+        PublishCloudWatchMetricsEnabled: true
+        BytesScannedCutoffPerQuery: 1073741824
+        EngineVersion:
+          SelectedEngineVersion: Athena engine version 3
+        ResultConfiguration:
+          OutputLocation: !Sub "s3://${AthenaResultsBucket}/query-results/"
+
+  IngestionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: {Service: lambda.amazonaws.com}
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: IngestStockPrices
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: secretsmanager:GetSecretValue
+                Resource: !Ref AppSecret
+              - Effect: Allow
+                Action: s3:PutObject
+                Resource:
+                  - !Sub "${DataBucket.Arn}/raw/*"
+                  - !Sub "${DataBucket.Arn}/transformed/*"
+
+  IngestionFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: aws-stock-market-ingestion
+      PackageType: Image
+      Code:
+        ImageUri: !Ref ImageUri
+      Architectures: [arm64]
+      ImageConfig:
+        Command: [stock_market_pipeline.extract.lambda_handler]
+      Role: !GetAtt IngestionRole.Arn
+      Timeout: 900
+      MemorySize: 1024
+      EphemeralStorage:
+        Size: 1024
+      Environment:
+        Variables:
+          APP_SECRET_ARN: !Ref AppSecret
+          DATA_BUCKET: !Ref DataBucket
+          JOB_MODE: daily
+          BACKFILL_START_DATE: "2021-01-01"
+          OVERLAP_DAYS: "10"
+
+  SchedulerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: {Service: scheduler.amazonaws.com}
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: InvokeIngestion
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: lambda:InvokeFunction
+                Resource: !GetAtt IngestionFunction.Arn
+
+  DailySchedule:
+    Type: AWS::Scheduler::Schedule
+    Properties:
+      Name: aws-stock-market-daily
+      State: !Ref ScheduleState
+      ScheduleExpression: cron(0 3 * * ? *)
+      ScheduleExpressionTimezone: America/Toronto
+      FlexibleTimeWindow: {Mode: "OFF"}
+      Target:
+        Arn: !GetAtt IngestionFunction.Arn
+        RoleArn: !GetAtt SchedulerRole.Arn
+        Input: '{"mode":"daily"}'
+        RetryPolicy:
+          MaximumEventAgeInSeconds: 3600
+          MaximumRetryAttempts: 2
+
+  QueryRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: {Service: lambda.amazonaws.com}
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: QueryStockPrices
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: secretsmanager:GetSecretValue
+                Resource: !Ref AppSecret
+              - Effect: Allow
+                Action: [athena:StartQueryExecution, athena:GetQueryExecution, athena:GetQueryResults, athena:StopQueryExecution]
+                Resource: !Sub "arn:${AWS::Partition}:athena:${AWS::Region}:${AWS::AccountId}:workgroup/${AthenaWorkGroup}"
+              - Effect: Allow
+                Action: [glue:GetDatabase, glue:GetTable, glue:GetPartitions]
+                Resource: "*"
+              - Effect: Allow
+                Action: [s3:GetObject, s3:ListBucket, s3:GetBucketLocation]
+                Resource:
+                  - !GetAtt DataBucket.Arn
+                  - !Sub "${DataBucket.Arn}/transformed/*"
+                  - !GetAtt AthenaResultsBucket.Arn
+                  - !Sub "${AthenaResultsBucket.Arn}/*"
+              - Effect: Allow
+                Action: [s3:PutObject, s3:AbortMultipartUpload]
+                Resource: !Sub "${AthenaResultsBucket.Arn}/*"
+
+  QueryFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: aws-stock-market-query
+      PackageType: Image
+      Code:
+        ImageUri: !Ref ImageUri
+      Architectures: [arm64]
+      ImageConfig:
+        Command: [stock_market_pipeline.api.lambda_handler]
+      Role: !GetAtt QueryRole.Arn
+      Timeout: 28
+      MemorySize: 512
+      Environment:
+        Variables:
+          APP_SECRET_ARN: !Ref AppSecret
+          ATHENA_DATABASE: stock_market
+          ATHENA_WORKGROUP: !Ref AthenaWorkGroup
+
+  PowerBiHttpApi:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: aws-stock-market-api
+      ProtocolType: HTTP
+
+  PowerBiApiIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref PowerBiHttpApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !GetAtt QueryFunction.Arn
+      PayloadFormatVersion: "2.0"
+      TimeoutInMillis: 29000
+
+  HealthRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref PowerBiHttpApi
+      RouteKey: GET /v1/health
+      Target: !Sub "integrations/${PowerBiApiIntegration}"
+
+  PricesRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref PowerBiHttpApi
+      RouteKey: GET /v1/prices
+      Target: !Sub "integrations/${PowerBiApiIntegration}"
+
+  DimSymbolRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref PowerBiHttpApi
+      RouteKey: GET /v1/dim-symbol
+      Target: !Sub "integrations/${PowerBiApiIntegration}"
+
+  DimDateRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref PowerBiHttpApi
+      RouteKey: GET /v1/dim-date
+      Target: !Sub "integrations/${PowerBiApiIntegration}"
+
+  FactDailyRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref PowerBiHttpApi
+      RouteKey: GET /v1/fact-daily
+      Target: !Sub "integrations/${PowerBiApiIntegration}"
+
+  ApiAccessLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/apigateway/aws-stock-market-api
+      RetentionInDays: 14
+
+  ApiGatewayCloudWatchRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: {Service: apigateway.amazonaws.com}
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
+
+  ApiGatewayAccount:
+    Type: AWS::ApiGateway::Account
+    Properties:
+      CloudWatchRoleArn: !GetAtt ApiGatewayCloudWatchRole.Arn
+
+  PowerBiApiStage:
+    Type: AWS::ApiGatewayV2::Stage
+    DependsOn: ApiGatewayAccount
+    Properties:
+      ApiId: !Ref PowerBiHttpApi
+      StageName: $default
+      AutoDeploy: true
+      AccessLogSettings:
+        DestinationArn: !GetAtt ApiAccessLogGroup.Arn
+        Format: >-
+          {"requestId":"$context.requestId","requestTime":"$context.requestTime",
+          "sourceIp":"$context.identity.sourceIp","method":"$context.httpMethod",
+          "path":"$context.path","routeKey":"$context.routeKey",
+          "status":"$context.status","responseLength":"$context.responseLength",
+          "responseLatency":"$context.responseLatency",
+          "integrationLatency":"$context.integrationLatency",
+          "integrationError":"$context.integrationErrorMessage"}
+      DefaultRouteSettings:
+        ThrottlingBurstLimit: 5
+        ThrottlingRateLimit: 2
+
+  PowerBiApiPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref QueryFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${PowerBiHttpApi}/*"
+
+Outputs:
+  ApiUrl:
+    Value: !Sub "https://${PowerBiHttpApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}"
+  DataBucketName:
+    Value: !Ref DataBucket
+  AthenaResultsBucketName:
+    Value: !Ref AthenaResultsBucket
+  AppSecretArn:
+    Value: !Ref AppSecret
+  IngestionFunctionName:
+    Value: !Ref IngestionFunction
+  QueryFunctionName:
+    Value: !Ref QueryFunction

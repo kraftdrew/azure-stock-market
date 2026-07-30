@@ -1,0 +1,15 @@
+.git
+.github
+.idea
+.env
+.venv
+**/__pycache__
+.pytest_cache
+.ruff_cache
+powerbi
+docs
+infrastructure
+ops
+tests
+*.md
+vm-powerbi.rdp

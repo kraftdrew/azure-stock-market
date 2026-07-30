@@ -1,127 +1,159 @@
-# Architecture Overview
+# Serverless AWS stock-market analytics
 
-This project demonstrates an end-to-end ELT (Extract, Load, Transform) pipeline based on the Medallion Architecture. The pipeline is designed to handle large-scale data from a data lake, implementing the Bronze, Silver, and Gold layers for structured data processing. This architecture facilitates data quality management, traceability, and scalability for analytical and reporting purposes.
+This repository runs a deliberately small stock-market pipeline on AWS. It uses
+two Lambda functions from one Docker image and stores business data under only
+two S3 prefixes: `raw/` and `transformed/`.
 
-![architecture](/assets/architecture_gif.gif)
+## Dashboard
 
-## Stages
+![Stock market dashboard](public/stock-market.png)
 
-The pipeline consists of the following main stages:
+The report compares stock performance across technology, automotive, and
+financial companies, with selectable time ranges, investment-return analysis,
+and industry-level rankings.
 
-1. **Bronze Layer (Raw Data)**
-    
-    We use the TwelveData API as the data source. [API Documentation](https://twelvedata.com/docs#getting-started)
-    
-    Below is a sample class for fetching data from the API:
-```
-import requests
-import json
-import time
+## Architecture
 
-class GetStockData(): 
+![AWS stock market pipeline architecture](public/architecture-diagram.jpg)
 
-    def __init__(self, api_key: str):
-        self.api_key = api_key
+There is no ECS, Fargate, dbt, Iceberg, Glue crawler, Glue ETL job, or
+pre-generated Power BI export.
 
-    def get_historical_stock_data(self, interval: str = "1day", symbols: list = ["QQQ", "VOO"], start_date: str = "2021-01-01", end_date: str = "2021-12-31"): 
+## Where Glue metadata is stored
 
-        interval_allowed_list = ["1min", "1h", "1day", "1week", "1month"]
-        if interval not in interval_allowed_list:
-            raise ValueError(f"Invalid interval. Allowed intervals are: {', '.join(interval_allowed_list)}")
+The `stock_market.prices` definition is stored in the regional,
+AWS-managed Glue Data Catalog. It is not an object or folder in either S3
+bucket.
 
-        responses_list = []
-        # Format of date in "yyyy-mm-dd"
-        for symbol in symbols:
-            time.sleep(7)
-            url = f"https://api.twelvedata.com/time_series?symbol={symbol}&interval={interval}&start_date={start_date}&end_date={end_date}&apikey={self.api_key}"
-            response = requests.get(url)
-            # Check if the request was successful
-            if response.status_code == 200:
-                # Parse the JSON data
-                data = response.json()
-                # Check the structure of the JSON response
-                if 'meta' in data and data.get('status') == 'ok':
-                    print(f"data saved for symbol {symbol} and date range {start_date} to {end_date}.")
-                    responses_list.append(data)
-                 
-                else:
-                    print(f"No data found in the JSON response for symbol {symbol} and date range {start_date} to {end_date}.")
+The catalog entry stores:
 
-        return responses_list
+- database and table names;
+- the twelve column names and data types;
+- Parquet input and serialization formats;
+- the `load_date` partition definition and projection rules;
+- the S3 location for `transformed/prices/`.
+
+Athena resolves the table through this hierarchy:
+
+```text
+AwsDataCatalog
+└── stock_market
+    └── prices
+        └── S3 location: transformed/prices/
 ```
 
-- This layer stores the raw, unprocessed data from the API.
-- Data is saved in a Databricks table, retaining the original format for traceability.
-- Minimal processing is performed here, focusing on data ingestion and basic structuring.
-1. **Silver Layer (Transformed Data)**
-    - Data from the Bronze layer is cleaned, transformed, and structured for analytical processing.
-    - Transformations may include removing duplicates, handling missing values, and applying necessary business rules.
-    - Processed data is stored in a structured format, making it ready for further enrichment.
-2. **Gold Layer (Aggregated Data)**
-    - Data in the Silver layer undergoes additional transformations and aggregations based on specific reporting and analytics requirements.
-    - This layer is optimized for high-performance queries, particularly for SQL Serverless Compute.
-    - Gold layer data serves as the final, enriched dataset used for reporting.
-3. **SQL Serverless Compute**
-    - Gold layer data is accessed via SQL Serverless, allowing for cost-efficient querying.
-    - This stage facilitates integration with the Power BI Service for visual analytics.
-4. **Power BI Service**
-    - Power BI connects to the SQL Serverless endpoint to generate reports and dashboards.
-    - Scheduled data refreshes keep the reports up-to-date with the latest Gold layer data.
+The Glue catalog stores no stock-price rows. Athena loads the metadata while
+planning a query, then reads the actual Parquet rows directly from S3.
 
-### Tech Stack
+## S3 layout
 
-- Databricks
-- Azure Storage Account
-- VNet (Virtual Network)
-- Key Vault
-- Power BI
-
-# Accessing Data Lake from Databricks
-
-![cluster_access](/assets/cluster_access.gif)
-
-## Access Azure Data Lake through an All-Purpose Cluster
-
-### VNet Injection
-
-1. Deploy the Azure Databricks resource on our virtual network (VNet). This setup ensures that clusters (excluding serverless ones) use IPs from our VNet IP address range.
-2. Next, configure our network subnets (both private and public) in the networking settings of the Azure Data Lake (Storage Account).
-
-### Service Principal
-
-1. Instead of directly accessing the storage account, we use a service principal assigned with appropriate roles in Access Control (IAM).
-2. All credentials are stored securely in Key Vault.
-
-![cluster_access](/assets/key_vault.png)
-
-3. Afterward, we use these values in the Spark configuration of the Databricks all-purpose cluster.
-
-```
-fs.azure.account.auth.type OAuth
-fs.azure.account.oauth.provider.type org.apache.hadoop.fs.azurebfs.oauth2.ClientCredsTokenProvider
-fs.azure.account.oauth2.client.id {{secrets/kv-stock-market/spn-stockmarket-storage-access-clientid}} 
-fs.azure.account.oauth2.client.secret {{secrets/kv-stock-market/spn-stockmarket-storage-access-clientsecret}}
-fs.azure.account.oauth2.client.endpoint {{secrets/kv-stock-market/az--oauth-endpoint}}
-spark.databricks.delta.schema.autoMerge.enabled true
-spark.sql.sources.partitionOverwriteMode dynamic
+```text
+data bucket/
+├── raw/
+│   └── twelvedata/load_date=YYYY-MM-DD/run-id/SYMBOL.json
+└── transformed/
+    └── prices/load_date=YYYY-MM-DD/part-run-id.parquet
 ```
 
+Athena query output is isolated in a second bucket and expires after one day.
+The Glue Data Catalog contains one database and one table, `stock_market.prices`.
+It stores metadata only; the rows remain in S3.
 
-4. Install PyPi packages on Databricks Cluster
+Daily loads overlap by ten days. The REST queries use `row_number()` to select
+the latest extraction for each `(symbol, price_date)`, so reruns are
+idempotent without rewriting old Parquet files.
 
+## REST API
+
+All endpoints use generated HTTP Basic credentials:
+
+- `GET /v1/prices?symbol=AAPL&start=2026-01-01&end=2026-07-29`
+- `GET /v1/dim-symbol`
+- `GET /v1/dim-date`
+- `GET /v1/fact-daily`
+- `GET /v1/health`
+
+The final three table endpoints preserve the existing Power BI model contract.
+API requests select from predefined SQL templates; clients cannot submit
+arbitrary SQL.
+
+## Configure
+
+Create `.env` in the repository root:
+
+```dotenv
+TWELVE_DATA_API_KEY=your-key
 ```
-websockets>=14.0,<15.0
-requests>=2.32.0,<2.33.0
+
+The legacy name `TWELWE-DATA-API` is also accepted by the secret configuration
+script. `.env` is ignored by Git.
+
+## Test
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements-dev.txt
+pytest
+ruff check src tests ops
+aws cloudformation validate-template \
+  --template-body file://infrastructure/cloudformation/stack.yaml \
+  --region us-east-1
 ```
 
-## Accessing Azure Data Lake through an All-Purpose Cluster
+## Deploy
 
-As shown in the diagram, although we deploy Azure Databricks on a Virtual Network, serverless clusters do not acquire IP addresses from this range. Serverless clusters are managed by Databricks servers rather than Azure servers. To enable data access from the storage account, we need to create a private endpoint using NCC (Network Connectivity Configurations).
+Docker and AWS CLI credentials are required:
 
-When a private endpoint is added to an NCC, Azure Databricks creates a private endpoint request to your Azure resource. Once accepted, the private endpoint enables secure access from the serverless compute plane. This endpoint is dedicated to your Azure Databricks account and accessible only from authorized workspaces. [Documentation](https://learn.microsoft.com/en-us/azure/databricks/security/network/serverless-network-security/serverless-private-link)
+```bash
+./ops/deploy.sh
+```
 
+The script creates or reuses ECR repository `aws-stock-market-poc`, builds an
+ARM64 Lambda image, pushes it with an immutable timestamp tag, deploys the
+CloudFormation stack, and copies the Twelve Data key into Secrets Manager
+without printing it. The schedule is disabled by default.
 
+Run the historical load:
 
-# Power Bi Report
-[Link to Power Bi Report](https://app.powerbi.com/view?r=eyJrIjoiNzFiOGZlZGQtZjdjYi00NTQ0LWI0OGYtNzYxMzY1YzA4NzlhIiwidCI6ImM1OGE5N2E3LTkzZTEtNDI4NC05ZDY5LWM2NzUyYmFmNzdhZiJ9)
-![architecture](/assets/stock_report_gif.gif)
+```bash
+.venv/bin/python ops/run_task.py --mode backfill
+```
+
+Enable the daily schedule after validation:
+
+```bash
+./ops/set_schedule.sh ENABLED
+```
+
+Retrieve the API URL and Basic credentials:
+
+```bash
+.venv/bin/python ops/show_powerbi_credentials.py
+```
+
+## Runtime roles
+
+- Ingestion Lambda calls Twelve Data and writes `raw/` and `transformed/`.
+- Query Lambda runs allowlisted Athena SQL and converts results to REST JSON.
+- Glue describes the Parquet schema and S3 location to Athena.
+- The dedicated Athena workgroup limits each query to 1 GiB scanned.
+- API Gateway throttles the API to two requests per second with a burst of five.
+- API Gateway writes structured access logs to
+  `/aws/apigateway/aws-stock-market-api` with a 14-day retention period.
+
+Follow endpoint invocations with:
+
+```bash
+aws logs tail /aws/apigateway/aws-stock-market-api \
+  --region us-east-1 \
+  --follow
+```
+
+The logs include request ID, time, source IP, method, path, route, status,
+response size, response latency, integration latency, and integration errors.
+Authorization headers and Basic credentials are not logged.
+
+This design favors clarity and low idle cost. Athena adds seconds of latency, so
+it is appropriate for Power BI refreshes and low-volume analytical requests,
+not a high-traffic transactional API.

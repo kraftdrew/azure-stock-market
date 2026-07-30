@@ -1,0 +1,5 @@
+-r requirements.txt
+boto3==1.43.59
+python-dotenv==1.1.1
+pytest==8.4.2
+ruff==0.12.12
